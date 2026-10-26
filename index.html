@@ -368,6 +368,34 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
 @media(max-width:1000px){.time-card-head,.finance-grid{grid-template-columns:1fr}}
 @media(max-width:720px){.slot-picker{grid-template-columns:1fr 1fr}.finance-entry{grid-template-columns:72px 1fr auto}.finance-cat-row{grid-template-columns:105px 1fr 65px}}
 
+
+/* --- TODAY + TIME DRAG + FINANCE INSIGHTS V6 --- */
+.today-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.today-card{min-height:132px;padding:14px;background:#1c1e23;border:1px solid #30333a}
+.today-card:nth-child(1){background:linear-gradient(145deg,#263039,#1d252c)}
+.today-card:nth-child(2){background:linear-gradient(145deg,#272d31,#1e2427)}
+.today-card:nth-child(3){background:linear-gradient(145deg,#292b31,#202329)}
+.today-card:nth-child(4){background:linear-gradient(145deg,#222b33,#1b2228)}
+.today-card small{color:#89919a;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.today-card h4{margin:8px 0 10px;font-size:18px}
+.today-mini-list{display:grid;gap:5px}
+.today-mini-list span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:#b9b4ab}
+.today-big{font-size:28px;font-weight:750;margin-top:10px}
+.time-cell.drag-select{outline:2px solid #c5ccd1;outline-offset:-2px;background:#2a3036}
+.slot-label{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden}
+.slot-label .slot-main{font-size:10px;font-weight:750;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.slot-label .slot-cat{font-size:7px;font-weight:550;opacity:.72;text-transform:capitalize;display:block}
+.finance-insights{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.insight-card{background:#1d1f24;border:1px solid #303239;padding:14px;min-height:100px}
+.insight-card small{font-size:10px;color:#858079}
+.insight-card b{display:block;font-size:22px;margin-top:9px}
+.insight-card span{display:block;font-size:10px;color:#8d8982;margin-top:5px}
+.recurring-badge{display:inline-block;margin-left:5px;padding:2px 5px;border:1px solid #46515a;background:#263039;color:#aebcc6;font-size:8px;border-radius:4px}
+.repeat-box{display:flex;align-items:center;gap:8px;padding:11px;border:1px solid #34363d;background:#111216}
+.repeat-box input{width:auto;margin:0}
+@media(max-width:1100px){.today-board,.finance-insights{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.today-board,.finance-insights{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -443,18 +471,36 @@ function currentWeekGoal(){return weekGoals().find(x=>x.weekStart===iso(startOfW
 function financeEntries(){return tasks.filter(t=>t.recordType==='financeentry'&&!t.deletedAt)}
 function financeBudgets(){return tasks.filter(t=>t.recordType==='financebudget'&&!t.deletedAt)}
 function monthBudget(month){return financeBudgets().find(x=>x.month===month)}
+let financeEnsuring=false;
+async function ensureRecurringForMonth(month){
+  if(financeEnsuring||!user)return;
+  financeEnsuring=true;
+  try{
+    const sources=financeEntries().filter(x=>x.recurring&&!x.recurringInstance&&String(x.date||'').slice(0,7)<=month);
+    for(const src of sources){
+      const srcMonth=String(src.date||'').slice(0,7);
+      if(srcMonth===month)continue;
+      const exists=financeEntries().some(x=>x.recurringSourceId===src.id&&String(x.date||'').slice(0,7)===month);
+      if(exists)continue;
+      const [y,m]=month.split('-').map(Number),last=new Date(y,m,0).getDate(),day=Math.min(Number(src.recurringDay||String(src.date).slice(8,10))||1,last);
+      const date=month+'-'+String(day).padStart(2,'0');
+      await save({...src,id:'fr-'+src.id+'-'+month,recordType:'financeentry',date,recurring:false,recurringInstance:true,recurringSourceId:src.id,receivedAt:new Date().toISOString(),deletedAt:null});
+    }
+  }finally{financeEnsuring=false}
+}
+
 function money(v){return new Intl.NumberFormat('ko-KR').format(Math.round(Number(v)||0))+'원'}
 
 const TIME_CATS=[
-  {key:'spirit',label:'For spirit',ko:'영을 위해',color:'#746b86'},
-  {key:'knowledge',label:'For knowledge',ko:'지식을 위해',color:'#58748d'},
-  {key:'health',label:'For health',ko:'건강을 위해',color:'#58796d'},
-  {key:'relationship',label:'For relationship',ko:'교류를 위해',color:'#876975'},
-  {key:'finance',label:'For finance',ko:'자산을 위해',color:'#6e7c63'},
-  {key:'career',label:'For career',ko:'커리어를 위해',color:'#506d86'},
-  {key:'joy',label:'For joy',ko:'행복을 위해',color:'#8a765c'},
-  {key:'sleep',label:'Sleep',ko:'수면',color:'#4e5870'},
-  {key:'other',label:'Other',ko:'기타',color:'#63676d'}
+  {key:'spirit',label:'For spirit',ko:'영을 위해',color:'#75648c'},
+  {key:'knowledge',label:'For knowledge',ko:'지식을 위해',color:'#5f7d99'},
+  {key:'health',label:'For health',ko:'건강을 위해',color:'#5f856e'},
+  {key:'relationship',label:'For relationship',ko:'교류를 위해',color:'#946d7b'},
+  {key:'finance',label:'For finance',ko:'자산을 위해',color:'#8b884f'},
+  {key:'career',label:'For career',ko:'커리어를 위해',color:'#4f7191'},
+  {key:'joy',label:'For joy',ko:'행복을 위해',color:'#9a7a45'},
+  {key:'sleep',label:'Sleep',ko:'수면',color:'#505b74'},
+  {key:'other',label:'Other',ko:'기타',color:'#707277'}
 ];
 function timeCat(key){return TIME_CATS.find(x=>x.key===key)||TIME_CATS[TIME_CATS.length-1]}
 
@@ -574,6 +620,10 @@ function home(){
   const personalToday=personalOpen.filter(x=>x.due===todayStr());
   const hs=liveLife('habit');
   const dates=weekDates();
+  const dayIdx=(new Date().getDay()+6)%7;
+  const scheduledToday=hs.filter(h=>(h.repeatDays||[1,1,1,1,1,1,1])[dayIdx]);
+  const habitDoneToday=scheduledToday.filter(h=>h.logs?.[todayStr()]);
+  const todayTime=timeBlocks().filter(b=>b.date===todayStr());
   const scheduled=hs.reduce((sum,h)=>sum+(h.repeatDays||[1,1,1,1,1,1,1]).filter(Boolean).length,0);
   const checked=hs.reduce((sum,h)=>sum+dates.filter((d,i)=>(h.repeatDays||[1,1,1,1,1,1,1])[i]&&h.logs?.[d]).length,0);
   const priority=[...open].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).slice(0,5);
@@ -589,6 +639,14 @@ function home(){
       <div class="m life-metric"><div class="section-head">${doodleIcon('life')}<span>오늘 Life 할 일</span></div><b>${personalToday.length}</b></div>
       <div class="m life-metric"><div class="section-head">${doodleIcon('star')}<span>이번 주 Habit</span></div><b>${scheduled?Math.round(checked/scheduled*100):0}%</b></div>
     </div>
+
+    <div class="today-board">
+      <div class="today-card"><small>TODAY · WORK</small><h4>오늘 Work</h4><div class="today-mini-list">${workToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 마감 업무 없음</span>'}</div></div>
+      <div class="today-card"><small>TODAY · LIFE</small><h4>오늘 Life</h4><div class="today-mini-list">${personalToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 할 일 없음</span>'}</div></div>
+      <div class="today-card"><small>TODAY · HABIT</small><h4>오늘 Habit</h4><div class="today-big">${habitDoneToday.length}/${scheduledToday.length}</div><div class="today-mini-list">${scheduledToday.slice(0,2).map(h=>`<span>${h.logs?.[todayStr()]?'✓':'○'} ${esc(h.title)}</span>`).join('')}</div></div>
+      <div class="today-card"><small>TODAY · TIME</small><h4>오늘 Time</h4><div class="today-big">${todayTime.length}h</div><div class="today-mini-list"><span>24시간 중 ${Math.round(todayTime.length/24*100)}% 기록</span></div></div>
+    </div>
+
     <div class="home-duo">
       <div class="card work-zone">
         <div class="section-head">${doodleIcon('work')}<h3>Work_To do</h3></div>
@@ -598,13 +656,13 @@ function home(){
       <div class="card life-zone">
         <div class="section-head">${doodleIcon('life')}<h3>Life_To do</h3></div>
         <div class="helper">오늘과 이번 주에 해야 할 개인 항목입니다.</div>
-        ${lifePriority.map(t=>`<div class="home-life-item"><span class="check" data-personal-done="${t.id}"></span><div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.area||'Other · 기타')}</small></div><span class="due ${t.due&&dd(t.due)<0?'late':''}">${dueLabel(t)}</span></div>`).join('')||'<p class="empty">개인 할 일이 없습니다.</p>'}
+        ${lifePriority.map(t=>`<div class="home-life-item"><span class="check" data-personal-done="${t.id}"></span><div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.area||'Other · 기타')}</small></div><span class="due ${t.due&&dd(t.due)<0?'late':''}">${formatDateKo(t.due)}<span class="date-inline">${dueLabel(t)}</span></span></div>`).join('')||'<p class="empty">개인 할 일이 없습니다.</p>'}
       </div>
     </div>
     <div class="home-duo">
       <div class="card habit-zone">
         <div class="section-head">${doodleIcon('star')}<h3>이번 주 Habit</h3></div>
-        ${hs.slice(0,5).map(h=>{const plan=h.repeatDays||[1,1,1,1,1,1,1];const done=dates.filter((d,i)=>plan[i]&&h.logs?.[d]).length;return `<div class="kv" style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #2b2d32"><span>${esc(h.title)}</span><span class="area">${done}/${plan.filter(Boolean).length}</span></div>`}).join('')||'<p class="empty">Habit이 없습니다.</p>'}
+        ${hs.slice(0,5).map(h=>{const plan=h.repeatDays||[1,1,1,1,1,1,1];const done=dates.filter((d,i)=>plan[i]&&h.logs?.[d]).length;return `<div class="kv"><span>${esc(h.title)}</span><span class="area">${done}/${plan.filter(Boolean).length}</span></div>`}).join('')||'<p class="empty">Habit이 없습니다.</p>'}
       </div>
       <div class="card goal-zone">
         <div class="section-head">${doodleIcon('scribble')}<h3>Goal progress</h3></div>
@@ -893,7 +951,7 @@ function timePage(){
         ${dates.map(d=>`<div class="time-head">${formatDateKo(d)}</div>`).join('')}
         ${hours.map(h=>`
           <div class="time-label">${String(h).padStart(2,'0')}:00</div>
-          ${dates.map(d=>{const b=byKey.get(d+'_'+h),c=b?timeCat(b.category):null;return `<button class="time-cell ${b?'filled':''}" style="${b?'--slot:'+c.color:''}" data-time-date="${d}" data-time-hour="${h}" title="${b?.note?esc(b.note):''}">${b?`<span class="slot-label">${esc(c.label)}</span>${b.note?'<i class="slot-note-dot"></i>':''}`:''}</button>`}).join('')}
+          ${dates.map(d=>{const b=byKey.get(d+'_'+h),c=b?timeCat(b.category):null;return `<button class="time-cell ${b?'filled':''}" style="${b?'--slot:'+c.color:''}" data-time-date="${d}" data-time-hour="${h}" title="${b?.note?esc(b.note):''}">${b?`<span class="slot-label"><span class="slot-main">${esc(b.note||c.label.replace(/^For\\s+/,''))}</span>${b.note?`<span class="slot-cat">${esc(c.label.replace(/^For\\s+/,''))}</span>`:''}</span>`:''}</button>`}).join('')}
         `).join('')}
       </div>
     </div>
@@ -922,17 +980,38 @@ function weekGoalModal(){
   document.querySelector('#weekGoalForm').onsubmit=async e=>{e.preventDefault();const text=String(new FormData(e.target).get('text')||'').trim();const id=current?.id||'wg-'+iso(startOfWeek());await save({...(current||{}),id,recordType:'weekgoal',weekStart:iso(startOfWeek()),text,receivedAt:current?.receivedAt||new Date().toISOString(),deletedAt:null});document.querySelector('#modal').remove();render()};
 }
 
-function timeBlockModal(date,hour){
-  const existing=timeBlocks().find(b=>b.date===date&&b.hour===hour);
+function timeBlockModal(date,hour,selection=null){
+  const cells=(selection&&selection.length)?selection:[{date,hour}];
+  const one=cells.length===1;
+  const existing=one?timeBlocks().find(b=>b.date===date&&b.hour===hour):null;
   const currentCat=existing?.category||'';
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet time-slot-sheet" id="timeBlockForm"><h2>${formatDateKo(date,true)} · ${String(hour).padStart(2,'0')}:00</h2><div class="slot-picker">
+  const sorted=[...cells];
+  const first=sorted[0],last=sorted[sorted.length-1];
+  const rangeTitle=one?`${formatDateKo(date,true)} · ${String(hour).padStart(2,'0')}:00`:`${formatDateKo(first.date,true)} · ${String(first.hour).padStart(2,'0')}:00 ~ ${String((last.hour+1)%24).padStart(2,'0')}:00 · ${cells.length}시간`;
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet time-slot-sheet" id="timeBlockForm"><h2>${rangeTitle}</h2><div class="slot-picker">
     ${TIME_CATS.map(c=>`<button type="button" class="slot-option ${currentCat===c.key?'selected':''}" style="--cat:${c.color}" data-slot-cat="${c.key}"><b>${esc(c.label)}</b><small>${esc(c.ko)}</small></button>`).join('')}
-  </div><input type="hidden" name="category" value="${esc(currentCat)}"><div class="slot-note"><label>무엇을 했나요?<textarea name="note" maxlength="160" placeholder="예: KB증권 GEO 리포트 수정">${esc(existing?.note||'')}</textarea></label></div><div class="actions"><div>${existing?'<button type="button" class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
+  </div><input type="hidden" name="category" value="${esc(currentCat)}"><div class="slot-note"><label>무엇을 했나요?<textarea name="note" maxlength="160" placeholder="예: KB증권 GEO 리포트 수정">${esc(existing?.note||'')}</textarea></label></div><div class="actions"><div>${one&&existing?'<button type="button" class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
   const form=document.querySelector('#timeBlockForm');
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
   document.querySelectorAll('[data-slot-cat]').forEach(b=>b.onclick=()=>{form.category.value=b.dataset.slotCat;document.querySelectorAll('[data-slot-cat]').forEach(x=>x.classList.toggle('selected',x===b))});
-  form.onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),category=fd.get('category');if(!category){toast('카테고리를 선택하세요.');return}const item={...(existing||{}),id:existing?.id||'tb-'+date+'-'+hour,recordType:'timeblock',date,hour,category,note:String(fd.get('note')||'').trim(),receivedAt:existing?.receivedAt||new Date().toISOString(),deletedAt:null};await save(item);document.querySelector('#modal').remove();render()};
+  form.onsubmit=async e=>{
+    e.preventDefault();const fd=new FormData(e.target),category=fd.get('category');if(!category){toast('카테고리를 선택하세요.');return}
+    const note=String(fd.get('note')||'').trim();
+    await Promise.all(cells.map(cell=>{const old=timeBlocks().find(b=>b.date===cell.date&&b.hour===cell.hour);return save({...(old||{}),id:old?.id||'tb-'+cell.date+'-'+cell.hour,recordType:'timeblock',date:cell.date,hour:cell.hour,category,note,receivedAt:old?.receivedAt||new Date().toISOString(),deletedAt:null})}));
+    document.querySelector('#modal').remove();render();
+  };
   document.querySelector('#removeTimeBlock')?.addEventListener('click',async()=>{if(existing)await deleteDoc(doc(db,'users',user.uid,'tasks',existing.id));document.querySelector('#modal').remove();render()});
+}
+function bindTimeDrag(){
+  const cells=[...document.querySelectorAll('[data-time-date]')];
+  let active=false,startDate='',selected=[];
+  const add=cell=>{if(cell.dataset.timeDate!==startDate)return;if(!selected.includes(cell)){selected.push(cell);cell.classList.add('drag-select')}};
+  const finish=()=>{if(!active)return;active=false;const picked=selected.map(c=>({date:c.dataset.timeDate,hour:Number(c.dataset.timeHour)}));selected.forEach(c=>c.classList.remove('drag-select'));selected=[];if(picked.length)timeBlockModal(picked[0].date,picked[0].hour,picked)};
+  cells.forEach(cell=>{
+    cell.addEventListener('mousedown',e=>{if(e.button!==0)return;e.preventDefault();active=true;startDate=cell.dataset.timeDate;selected=[];add(cell)});
+    cell.addEventListener('mouseenter',()=>{if(active)add(cell)});
+  });
+  document.onmouseup=finish;
 }
 
 
@@ -952,13 +1031,23 @@ const FIN_CATS=[
 function finCat(key){return FIN_CATS.find(x=>x.key===key)||FIN_CATS[FIN_CATS.length-1]}
 function monthShift(month,delta){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+delta,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function financePage(){
+  setTimeout(()=>ensureRecurringForMonth(financeMonth),0);
   const entries=financeEntries().filter(x=>String(x.date||'').startsWith(financeMonth)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.receivedAt||'').localeCompare(a.receivedAt||''));
+  const prevMonth=monthShift(financeMonth,-1);
+  const prevEntries=financeEntries().filter(x=>String(x.date||'').startsWith(prevMonth));
   const expenses=entries.filter(x=>x.type==='expense'),incomes=entries.filter(x=>x.type==='income');
+  const prevExpenses=prevEntries.filter(x=>x.type==='expense');
   const expense=expenses.reduce((a,b)=>a+Number(b.amount||0),0),income=incomes.reduce((a,b)=>a+Number(b.amount||0),0);
+  const prevExpense=prevExpenses.reduce((a,b)=>a+Number(b.amount||0),0);
   const budget=monthBudget(financeMonth),budgetAmount=Number(budget?.amount||0),remaining=budgetAmount-expense;
-  const totals={};FIN_CATS.forEach(c=>totals[c.key]=0);expenses.forEach(x=>totals[x.category]=(totals[x.category]||0)+Number(x.amount||0));
+  const totals={},prevTotals={};FIN_CATS.forEach(c=>{totals[c.key]=0;prevTotals[c.key]=0});expenses.forEach(x=>totals[x.category]=(totals[x.category]||0)+Number(x.amount||0));prevExpenses.forEach(x=>prevTotals[x.category]=(prevTotals[x.category]||0)+Number(x.amount||0));
+  const delta=prevExpense?Math.round((expense-prevExpense)/prevExpense*100):null;
+  const incCat=FIN_CATS.map(c=>({...c,diff:(totals[c.key]||0)-(prevTotals[c.key]||0)})).sort((a,b)=>b.diff-a.diff)[0];
+  const fixed=expenses.filter(x=>x.nature==='fixed').reduce((a,b)=>a+Number(b.amount||0),0);
+  const fixedRatio=expense?Math.round(fixed/expense*100):0;
+  const savingRate=income?Math.round((income-expense)/income*100):null;
   return `<section class="page-finance">
-    <div class="hero"><div><h1>Finance</h1><p>이번 달 소비와 수입을 기록하고, 예산과 카테고리별 지출을 봅니다.</p></div><div class="life-top-actions"><button class="btn secondary" id="setBudget">예산 설정</button><button class="btn" id="addFinance">＋ 내역 추가</button></div></div>
+    <div class="hero"><div><h1>Finance</h1><p>이번 달 소비와 수입을 기록하고, 예산과 전월 변화를 함께 봅니다.</p></div><div class="life-top-actions"><button class="btn secondary" id="setBudget">예산 설정</button><button class="btn" id="addFinance">＋ 내역 추가</button></div></div>
     <div class="finance-month-nav"><button id="prevFinanceMonth">‹</button><div class="finance-month-label">${financeMonth.replace('-','.')}.</div><button id="nextFinanceMonth">›</button></div>
     <div class="metrics" style="margin-top:14px">
       <div class="m" style="background:linear-gradient(145deg,#2d2528,#242024)!important"><span>이번 달 지출</span><b>${money(expense)}</b></div>
@@ -966,21 +1055,27 @@ function financePage(){
       <div class="m" style="background:linear-gradient(145deg,#252c34,#1e252b)!important"><span>수입 - 지출</span><b>${money(income-expense)}</b></div>
       <div class="m" style="background:linear-gradient(145deg,#292b30,#222429)!important"><span>예산 잔여</span><b>${budgetAmount?money(remaining):'-'}</b></div>
     </div>
+    <div class="finance-insights">
+      <div class="insight-card"><small>전월 대비 지출</small><b>${delta===null?'-':(delta>0?'+':'')+delta+'%'}</b><span>${prevMonth.replace('-','.')} 대비</span></div>
+      <div class="insight-card"><small>가장 많이 늘어난 카테고리</small><b>${incCat&&incCat.diff>0?incCat.label:'-'}</b><span>${incCat&&incCat.diff>0?'+'+money(incCat.diff):'증가 없음'}</span></div>
+      <div class="insight-card"><small>고정비 비중</small><b>${fixedRatio}%</b><span>${money(fixed)} / 총지출</span></div>
+      <div class="insight-card"><small>순저축률</small><b>${savingRate===null?'-':savingRate+'%'}</b><span>수입 대비 잔여 금액 기준</span></div>
+    </div>
     <div class="finance-grid">
       <div class="card">
         <div class="section-head">${doodleIcon('finance')}<h3>이번 달 내역</h3></div>
         ${budgetAmount?`<div class="finance-budget-card"><div class="finance-budget-line"><div><small>월 예산</small><b>${money(budgetAmount)}</b></div><div style="text-align:right"><small>사용</small><b>${Math.min(999,Math.round(expense/budgetAmount*100))}%</b></div></div><div class="finance-budget-bar"><i style="width:${Math.min(100,expense/budgetAmount*100)}%"></i></div></div>`:''}
-        <div class="finance-list">${entries.slice(0,30).map(x=>`<div class="finance-entry" data-finance-edit="${x.id}"><div class="date">${formatDateKo(x.date)}</div><div><b>${esc(x.memo||finCat(x.category).label)}</b><small>${esc(finCat(x.category).label)} · ${esc(x.nature==='fixed'?'고정':'변동')} · ${esc(x.method||'')}</small></div><div class="amount ${x.type}">${x.type==='expense'?'-':'+'}${money(x.amount)}</div></div>`).join('')||'<div class="empty">이번 달 기록이 없습니다.</div>'}</div>
+        <div class="finance-list">${entries.slice(0,30).map(x=>`<div class="finance-entry" data-finance-edit="${x.id}"><div class="date">${formatDateKo(x.date)}</div><div><b>${esc(x.memo||finCat(x.category).label)}${x.recurring||x.recurringInstance?'<span class="recurring-badge">매월</span>':''}</b><small>${esc(finCat(x.category).label)} · ${esc(x.nature==='fixed'?'고정':'변동')} · ${esc(x.method||'')}</small></div><div class="amount ${x.type}">${x.type==='expense'?'-':'+'}${money(x.amount)}</div></div>`).join('')||'<div class="empty">이번 달 기록이 없습니다.</div>'}</div>
       </div>
       <div class="card">
         <div class="section-head">${doodleIcon('scribble')}<h3>지출 카테고리</h3></div>
-        <div class="finance-categories">${FIN_CATS.map(c=>{const n=totals[c.key]||0,p=expense?Math.round(n/expense*100):0;return `<div class="finance-cat-row"><span>${c.label}</span><div class="finance-cat-track"><i style="width:${p}%;--cat:${c.color};background:${c.color}"></i></div><b>${p}%</b></div>`}).join('')}</div>
+        <div class="finance-categories">${FIN_CATS.map(c=>{const n=totals[c.key]||0,p=expense?Math.round(n/expense*100):0;return `<div class="finance-cat-row"><span>${c.label}</span><div class="finance-cat-track"><i style="width:${p}%;background:${c.color}"></i></div><b>${p}%</b></div>`}).join('')}</div>
       </div>
     </div>
   </section>`;
 }
 function financeModal(item=null){
-  const editing=!!item,x=item||{recordType:'financeentry',type:'expense',amount:'',date:todayStr(),category:'food',nature:'variable',method:'카드',memo:''};
+  const editing=!!item,x=item||{recordType:'financeentry',type:'expense',amount:'',date:todayStr(),category:'food',nature:'variable',method:'카드',memo:'',recurring:false,recurringDay:Number(todayStr().slice(8,10))};
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="financeForm"><h2>${editing?'내역 수정':'내역 추가'}</h2><div class="form">
     <label>구분<select name="type"><option value="expense" ${x.type==='expense'?'selected':''}>지출</option><option value="income" ${x.type==='income'?'selected':''}>수입</option></select></label>
     <label>금액<div class="money-input"><input type="number" min="0" step="100" name="amount" value="${esc(x.amount)}" required><span>원</span></div></label>
@@ -989,11 +1084,16 @@ function financeModal(item=null){
     <label>성격<select name="nature"><option value="variable" ${x.nature==='variable'?'selected':''}>변동</option><option value="fixed" ${x.nature==='fixed'?'selected':''}>고정</option></select></label>
     <label>결제수단<select name="method">${['카드','계좌','현금','기타'].map(v=>`<option ${x.method===v?'selected':''}>${v}</option>`).join('')}</select></label>
     <label class="full">메모<input name="memo" value="${esc(x.memo||'')}" placeholder="예: 점심, 교통카드 충전"></label>
+    <label class="full"><span>반복</span><div class="repeat-box"><input type="checkbox" name="recurring" ${x.recurring&&!x.recurringInstance?'checked':''} ${x.recurringInstance?'disabled':''}><span>매월 같은 날짜에 자동 생성${x.recurringInstance?' · 자동 생성된 내역':''}</span></div></label>
   </div><div class="actions"><div>${editing?'<button type="button" class="btn danger" id="deleteFinance">삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
   const form=document.querySelector('#financeForm');bindCalendarFields(form);
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
   document.querySelector('#deleteFinance')?.addEventListener('click',async()=>{if(confirm('이 내역을 삭제할까요?'))await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));document.querySelector('#modal').remove();render()});
-  form.onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);await save({...x,id:editing?x.id:'fe-'+Date.now(),recordType:'financeentry',type:fd.get('type'),amount:Number(fd.get('amount'))||0,date:fd.get('date')||todayStr(),category:fd.get('category')||'other',nature:fd.get('nature')||'variable',method:fd.get('method')||'카드',memo:String(fd.get('memo')||'').trim(),receivedAt:editing?(x.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});document.querySelector('#modal').remove();render()};
+  form.onsubmit=async e=>{
+    e.preventDefault();const fd=new FormData(e.target),date=fd.get('date')||todayStr();
+    await save({...x,id:editing?x.id:'fe-'+Date.now(),recordType:'financeentry',type:fd.get('type'),amount:Number(fd.get('amount'))||0,date,category:fd.get('category')||'other',nature:fd.get('nature')||'variable',method:fd.get('method')||'카드',memo:String(fd.get('memo')||'').trim(),recurring:x.recurringInstance?false:!!fd.get('recurring'),recurringDay:Number(String(date).slice(8,10))||1,receivedAt:editing?(x.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});
+    document.querySelector('#modal').remove();render();
+  };
 }
 function budgetModal(){
   const current=monthBudget(financeMonth);
@@ -1106,7 +1206,7 @@ function bind(){
   document.querySelectorAll('[data-habit-edit]').forEach(b=>b.onclick=()=>{const h=tasks.find(x=>x.id===b.dataset.habitEdit);if(h)habitModal(h)});
   document.querySelectorAll('[data-goal-edit]').forEach(b=>b.onclick=()=>{const g=tasks.find(x=>x.id===b.dataset.goalEdit);if(g)goalModal(g)});
   document.querySelectorAll('[data-life-trash]').forEach(b=>b.onclick=()=>moveLifeTrash(b.dataset.lifeTrash));
-  document.querySelectorAll('[data-time-date]').forEach(b=>b.onclick=()=>timeBlockModal(b.dataset.timeDate,Number(b.dataset.timeHour)));
+  bindTimeDrag();
   document.querySelector('#editWeekGoal')?.addEventListener('click',weekGoalModal);
   document.querySelector('#addFinance')?.addEventListener('click',()=>financeModal());
   document.querySelector('#setBudget')?.addEventListener('click',budgetModal);
