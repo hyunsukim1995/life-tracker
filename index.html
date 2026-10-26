@@ -217,6 +217,70 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
 .form-section-title{font-size:11px;font-weight:700;color:#c9c3b8;margin-bottom:9px}
 @media(max-width:720px){.main{padding:16px}.card.work-zone:before,.card.life-zone:before{top:16px;bottom:16px}}
 
+
+/* --- UI REFINEMENT V5 --- */
+:root{
+  --sky-1:#202a33;--sky-2:#263441;--sky-3:#314352;
+  --gray-1:#1d1f23;--gray-2:#24262b;--gray-3:#303239;
+}
+.app{grid-template-columns:190px 1fr;transition:grid-template-columns .18s ease}
+.app.side-collapsed{grid-template-columns:68px 1fr}
+.side{padding:16px 12px}
+.side-top{display:flex;align-items:center;gap:6px;margin-bottom:22px}
+.brand{margin:0;flex:1;font-size:23px;white-space:nowrap;overflow:hidden}
+.side-toggle{width:34px;height:34px;border:1px solid #303239;background:#17181c;color:#c5c0b6;border-radius:7px;display:grid;place-items:center}
+.side.collapsed .brand-text,.side.collapsed .nav-label,.side.collapsed .logout-label{display:none}
+.side.collapsed .brand{font-size:14px;text-align:center}
+.side.collapsed .nav button{justify-content:center;padding:10px 6px}
+.side.collapsed .me{padding:12px 0;text-align:center}
+.side.collapsed .me button{justify-content:center}
+.me{overflow:hidden}
+.me button{display:flex;align-items:center;gap:8px;color:#8e8a82}
+.card,.table,.m{border-radius:10px}
+.goal-card{border-radius:8px}
+.btn{border-radius:8px}
+.btn.secondary,.btn.danger{border-radius:8px}
+.search{border-radius:8px}
+.nav button{border-radius:7px}
+.sheet{border-radius:12px}
+.form input,.form select,.form textarea,.quickline input{border-radius:7px}
+.tabs button,.due,.area,.pill{border-radius:7px}
+.check{border-radius:4px}
+.habit-day{border-radius:6px}
+.schedule-picker label{border-radius:7px}
+.progress{border-radius:3px}
+.doodle-mark{width:31px;height:31px;display:inline-grid;place-items:center;border-radius:7px;flex:0 0 auto;border:1px solid rgba(255,255,255,.05)}
+.doodle-mark.sky{background:#283743;color:#b7c7d2}
+.doodle-mark.gray{background:#292b30;color:#c2beb6}
+.doodle-icon{width:20px;height:20px;transform:rotate(-2deg)}
+.nav .doodle-mark{width:28px;height:28px}
+.m.work-metric{background:linear-gradient(145deg,#222930,#1d2228)!important;border-top:0;border-left:3px solid #63798c}
+.m.life-metric{background:linear-gradient(145deg,#25272b,#202226)!important;border-top:0;border-left:3px solid #69737d}
+.work-zone{background:linear-gradient(145deg,#202831,#1b2026)!important}
+.life-zone{background:linear-gradient(145deg,#24272b,#1e2024)!important}
+.habit-zone{background:linear-gradient(145deg,#22252a,#1d1f23)!important}
+.goal-zone{background:linear-gradient(145deg,#1f2226,#1a1c20)!important}
+.card.work-zone:before,.card.life-zone:before{display:none}
+.section-head{border-bottom-color:#34363c}
+.calendar-field{display:grid;gap:6px}
+.calendar-field>span{font-size:11px;color:#8f8a81}
+.date-button{width:100%;text-align:left;border:1px solid #34363d;background:#111216;color:#f0ece4;border-radius:7px;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.date-button:after{content:'▦';color:#7f8b94}
+.calendar-layer{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:50;display:grid;place-items:center;padding:20px}
+.calendar-pop{width:330px;background:#191a1e;border:1px solid #3b3d44;border-radius:10px;padding:14px;box-shadow:0 20px 60px rgba(0,0,0,.38)}
+.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calendar-head button{border:1px solid #34363d;background:#22242a;color:#d7d2c8;width:32px;height:30px;border-radius:6px}
+.calendar-title{font-weight:700}
+.calendar-week,.calendar-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendar-week div{font-size:10px;text-align:center;color:#7e7a73;padding:4px 0}
+.calendar-day{height:36px;border:0;background:#202126;color:#c5c0b7;border-radius:5px}
+.calendar-day:hover{background:#2b333b}
+.calendar-day.muted{opacity:.28}
+.calendar-day.selected{background:#526877;color:#fff}
+.calendar-day.today{outline:1px solid #6f7f8b}
+.date-inline{font-size:10px;color:#9aa2a9;display:block;margin-top:3px}
+@media(max-width:760px){.app.side-collapsed{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -238,7 +302,7 @@ const cfg={
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 setPersistence(auth,browserLocalPersistence);
 
-let user=null,tasks=[],page='home',tab='active',search='',unsub=null;
+let user=null,tasks=[],page='home',tab='active',search='',unsub=null,sideCollapsed=localStorage.getItem('lt_sidebar')==='collapsed';
 const root=document.querySelector('#root');
 
 const iso=(d=new Date())=>new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -288,7 +352,47 @@ function liveLife(type){return tasks.filter(t=>t.recordType===type&&!t.deletedAt
 function weekDates(){
   const d=startOfWeek(),arr=[]; for(let i=0;i<7;i++){const x=new Date(d);x.setDate(d.getDate()+i);arr.push(iso(x))} return arr;
 }
+
 function weekdayLabel(dateStr){return ['일','월','화','수','목','금','토'][new Date(dateStr+'T00:00:00').getDay()]}
+function formatDateKo(dateStr,year=false){
+  if(!dateStr)return '날짜 선택';
+  const d=new Date(dateStr+'T00:00:00');
+  const prefix=year?d.getFullYear()+'.':'';
+  return prefix+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' ('+weekdayLabel(dateStr)+')';
+}
+function calendarField(name,value,label){
+  return `<label class="calendar-field"><span>${label}</span><input type="hidden" name="${name}" value="${esc(value||'')}"><button type="button" class="date-button" data-calendar-field="${name}">${formatDateKo(value,true)}</button></label>`;
+}
+function bindCalendarFields(form){
+  form?.querySelectorAll('[data-calendar-field]').forEach(btn=>btn.addEventListener('click',()=>{
+    const input=form.querySelector('[name="'+btn.dataset.calendarField+'"]');
+    openCalendar(input?.value||todayStr(),value=>{input.value=value;btn.textContent=formatDateKo(value,true)});
+  }));
+}
+function openCalendar(current,onSelect){
+  const base=current?new Date(current+'T00:00:00'):new Date();
+  const layer=document.createElement('div');layer.className='calendar-layer';layer.id='calendarLayer';document.body.appendChild(layer);
+  let y=base.getFullYear(),m=base.getMonth();
+  const draw=()=>{
+    const first=new Date(y,m,1),start=(first.getDay()+6)%7,last=new Date(y,m+1,0).getDate();
+    const prevLast=new Date(y,m,0).getDate(),cells=[];
+    for(let i=0;i<42;i++){
+      let day,cy=y,cm=m,muted=false;
+      if(i<start){day=prevLast-start+i+1;cm=m-1;muted=true;if(cm<0){cm=11;cy--}}
+      else if(i>=start+last){day=i-start-last+1;cm=m+1;muted=true;if(cm>11){cm=0;cy++}}
+      else day=i-start+1;
+      const val=cy+'-'+String(cm+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      cells.push(`<button class="calendar-day ${muted?'muted':''} ${val===current?'selected':''} ${val===todayStr()?'today':''}" data-date="${val}">${day}</button>`);
+    }
+    layer.innerHTML=`<div class="calendar-pop"><div class="calendar-head"><button type="button" data-cal-prev>‹</button><div class="calendar-title">${y}년 ${m+1}월</div><button type="button" data-cal-next>›</button></div><div class="calendar-week">${['월','화','수','목','금','토','일'].map(x=>'<div>'+x+'</div>').join('')}</div><div class="calendar-days">${cells.join('')}</div></div>`;
+    layer.querySelector('[data-cal-prev]').onclick=()=>{m--;if(m<0){m=11;y--}draw()};
+    layer.querySelector('[data-cal-next]').onclick=()=>{m++;if(m>11){m=0;y++}draw()};
+    layer.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{onSelect(b.dataset.date);layer.remove()});
+    layer.onclick=e=>{if(e.target===layer)layer.remove()};
+  };
+  draw();
+}
+
 async function moveTrash(id){
   const t=tasks.find(x=>x.id===id); if(!t)return;
   if(confirm(`"${t.title}" 업무를 휴지통으로 이동할까요?`)){await save({...t,deletedAt:new Date().toISOString()});toast('휴지통으로 이동했습니다.')}
@@ -323,25 +427,26 @@ function parseQuick(text){
 
 
 function doodleIcon(kind){
-  const a='fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
-  const icons={
-    work:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3 8.5c5-.7 13-.6 18 .2l-.8 10.2c-4.9.5-11.2.3-16.2-.1L3 8.5z"/><path ${a} d="M9 8.3V6.2c1.5-.6 4.5-.6 6 0v2.1"/><path ${a} d="M4 12.2c4.7.7 10.5.7 16-.1"/></svg>`,
-    life:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12 20c-2.6-2-7.4-5.3-7.3-10 .1-4.3 5.2-5.3 7.3-1.9 2.5-3.5 7.4-2.2 7.3 1.9-.1 4.5-4.5 7.7-7.3 10z"/></svg>`,
-    time:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12 3.4c5.4-.1 8.6 4.2 8.5 8.7-.1 4.8-3.6 8.6-8.7 8.4-5.3-.2-8.2-4.1-8.1-8.5.1-4.8 3.2-8.5 8.3-8.6z"/><path ${a} d="M12 7.2v5.3l3.4 2.2"/></svg>`,
-    finance:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.5 7.2c5.4-.8 11.7-.6 17 .2l-.4 9.7c-5 .7-11.6.5-16.2 0L3.5 7.2z"/><path ${a} d="M12.2 9.2v6.3M9.7 11c.2-1.4 4.8-1.8 4.8.2 0 2.1-4.7.8-4.7 2.8 0 1.7 4.5 1.5 4.9-.1"/></svg>`,
-    star:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12 3.1l2.3 5 5.5.7-4 3.7.9 5.5-4.7-2.8-4.8 2.7 1-5.4-4-3.7 5.5-.8L12 3.1z"/></svg>`,
-    scribble:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.3 15.8c2.4-8.2 5.5 7.4 9.2-3.7 2.1-6.3 4.5 4.8 8.4-4.3"/></svg>`
+  const a='fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"';
+  const svg={
+    work:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.3 9.2c4.6-1.5 12.9-1.1 17.3.4l-.9 9.1c-4.7 1-10.6.7-15.4-.3L3.3 9.2z"/><path ${a} d="M8.7 8.7c.2-2.1 1-3.1 3.5-3.2 2.7-.1 3.4 1.2 3.2 3.5"/><path ${a} d="M4.6 12.5c4.1.8 10.7.2 15-.4"/></svg>`,
+    life:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12.1 20.2C9.4 18.6 4.5 15 4.8 9.9 5 6.2 9.5 5 12 8.2c2.1-3.5 7.2-2 7.1 2.1-.2 4.6-4.7 7.7-7 9.9z"/><path ${a} d="M6.3 10.8c1.1-.7 2.2-.7 3.2-.1"/></svg>`,
+    time:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12.4 3.6c5.6.1 8.2 3.8 7.9 8.8-.3 4.8-3.7 8-8.5 8-5.2 0-8.2-3.6-8-8.4.2-5 3.3-8.5 8.6-8.4z"/><path ${a} d="M12 7.5c.2 2.2.2 3.9-.1 5.2l3.7 2.2"/></svg>`,
+    finance:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.7 7.4c4.8-1 11.7-.7 16.6.1l-.5 9.5c-4.7 1.2-11.2.9-15.7.1L3.7 7.4z"/><path ${a} d="M12.4 9.1c-.6 2.8-.4 4.9-.2 6.7M9.8 11c.4-1.4 4.5-1.7 4.7.2.2 2-4.6.8-4.5 2.7.1 1.6 4.3 1.4 4.7-.1"/></svg>`,
+    star:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12.2 3.1l2 5.1 5.7 1-4.2 3.5 1.1 5.5-4.9-2.7-4.6 2.4.8-5.3-4-3.9 5.5-.5 2.6-5.1z"/></svg>`,
+    scribble:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.4 16.7c2.2-8.6 5.2 6.3 8.8-2.7 2.6-6.4 4.7 4.1 8.5-5.2"/><path ${a} d="M5 18.1c3.1-2.4 5.6 1.2 8.1-.8"/></svg>`,
+    logout:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M10 5.2c-2.2-.3-3.9-.1-5.6.4l-.2 12.8c1.7.6 3.5.7 5.6.3"/><path ${a} d="M13.2 8.3l4.1 3.7-4 3.8M8.4 12.1h8.5"/></svg>`
   };
-  return icons[kind]||icons.scribble;
+  const tone=['work','time','finance'].includes(kind)?'sky':'gray';
+  return `<span class="doodle-mark ${tone}">${svg[kind]||svg.scribble}</span>`;
 }
-
 function side(){
-  return `<aside class="side">
-    <div class="brand" id="brandHome">Life Tracker</div>
+  return `<aside class="side ${sideCollapsed?'collapsed':''}">
+    <div class="side-top"><div class="brand" id="brandHome"><span class="brand-text">Life Tracker</span><span class="brand-mini">${sideCollapsed?'LT':''}</span></div><button class="side-toggle" id="sideToggle" title="메뉴 열기/닫기">${sideCollapsed?'›':'‹'}</button></div>
     <div class="nav">
-      ${[['work','Work'],['life','Life'],['time','Time'],['finance','Finance']].map(x=>`<button data-page="${x[0]}" class="${page===x[0]?'on':''}">${doodleIcon(x[0])}<span>${x[1]}</span></button>`).join('')}
+      ${[['work','Work'],['life','Life'],['time','Time'],['finance','Finance']].map(x=>`<button data-page="${x[0]}" class="${page===x[0]?'on':''}">${doodleIcon(x[0])}<span class="nav-label">${x[1]}</span></button>`).join('')}
     </div>
-    <div class="me"><span>${esc(user?.email||'')}</span><button id="logout">로그아웃</button></div>
+    <div class="me"><button id="logout">${doodleIcon('logout')}<span class="logout-label">로그아웃</span></button></div>
   </aside>`;
 }
 function top(){
@@ -366,7 +471,7 @@ function home(){
   const lifePriority=[...personalOpen].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).slice(0,5);
   return `<section>
     <div class="hero">
-      <div><h1>오늘의 Work와 Life.</h1><p>업무와 개인 생활을 따로 보지 않고, 오늘 놓치면 안 되는 것부터 한 화면에서 봅니다.</p></div>
+      <div><h1>Work & Life</h1><p>업무와 개인 생활을 따로 보지 않고, 오늘 놓치면 안 되는 것부터 한 화면에서 봅니다.</p></div>
       <button class="btn" id="quickAdd">＋ 빠른 추가</button>
     </div>
     <div class="metrics">
@@ -377,12 +482,12 @@ function home(){
     </div>
     <div class="home-duo">
       <div class="card work-zone">
-        <div class="section-head">${doodleIcon('work')}<h3>Work snapshot</h3></div>
+        <div class="section-head">${doodleIcon('work')}<h3>Work_To do</h3></div>
         <div class="helper">마감이 가까운 업무부터 보여줍니다.</div>
-        ${priority.map(t=>`<div class="task"><span class="check" data-done="${t.id}"></span><div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.project)}${t.requester?' · '+esc(t.requester):''}</small></div><span class="due ${t.due&&dd(t.due)<0?'late':''}">${dueLabel(t)}</span></div>`).join('')||'<p class="empty">진행 중인 업무가 없습니다.</p>'}
+        ${priority.map(t=>`<div class="task"><span class="check" data-done="${t.id}"></span><div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.project)}${t.requester?' · '+esc(t.requester):''}</small></div><span class="due ${t.due&&dd(t.due)<0?'late':''}">${formatDateKo(t.due)}<span class="date-inline">${dueLabel(t)}</span></span></div>`).join('')||'<p class="empty">진행 중인 업무가 없습니다.</p>'}
       </div>
       <div class="card life-zone">
-        <div class="section-head">${doodleIcon('life')}<h3>Life snapshot</h3></div>
+        <div class="section-head">${doodleIcon('life')}<h3>Life_To do</h3></div>
         <div class="helper">오늘과 이번 주에 해야 할 개인 항목입니다.</div>
         ${lifePriority.map(t=>`<div class="home-life-item"><span class="check" data-personal-done="${t.id}"></span><div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.area||'Other · 기타')}</small></div><span class="due ${t.due&&dd(t.due)<0?'late':''}">${dueLabel(t)}</span></div>`).join('')||'<p class="empty">개인 할 일이 없습니다.</p>'}
       </div>
@@ -435,7 +540,7 @@ function workRow(t){
     <div class="check ${t.status==='done'?'done':''}" data-done="${t.id}">${t.status==='done'?'✓':''}</div>
     <div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>
     <div>${esc(t.requester)}</div><div>${esc(t.channel)}</div><div>${esc(t.project)}</div>
-    <div class="${t.due&&dd(t.due)<0&&t.status!=='done'?'late':''}">${dueLabel(t)}</div>
+    <div class="${t.due&&dd(t.due)<0&&t.status!=='done'?'late':''}">${formatDateKo(t.due)}<span class="date-inline">${dueLabel(t)}</span></div>
     <div><select data-status="${t.id}" class="pill ${t.status}">
       <option value="todo" ${t.status==='todo'?'selected':''}>할 일</option>
       <option value="doing" ${t.status==='doing'?'selected':''}>진행 중</option>
@@ -545,7 +650,7 @@ function goalCard(g){
   return `<div class="goal-card">
     <span class="area">${esc(g.area||'Other · 기타')}</span>
     <h4 data-goal-edit="${g.id}">${esc(g.title)}</h4>
-    <small>${g.targetDate?'목표 '+esc(g.targetDate):'목표일 없음'}</small>
+    <small>${g.targetDate?'목표 '+formatDateKo(g.targetDate,true):'목표일 없음'}</small>
     <div class="goal-link-meta"><span>Habit ${linkedHabits.length}</span><span>Todo ${linkedTodos.length}</span><span>자동 진행 ${rates.length?'ON':'OFF'}</span></div>
     <div class="progress"><i style="width:${Math.max(0,Math.min(100,progress))}%"></i></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px"><small>${progress}%</small><button class="linkbtn" data-life-trash="${g.id}">삭제</button></div>
@@ -569,7 +674,7 @@ function personalModal(item=null){
   const liveGoals=liveLife('goal'),liveHabits=liveLife('habit');
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="personalForm">
     <h2>${editing?'개인 할 일 수정':'개인 할 일 추가'}</h2>
-    <div class="quickline"><label>할 일<input name="title" value="${esc(t.title)}" required autofocus></label><label>마감일<input type="date" name="due" value="${esc(t.due||todayStr())}"></label></div>
+    <div class="quickline"><label>할 일<input name="title" value="${esc(t.title)}" required autofocus></label>${calendarField('due',t.due||todayStr(),'마감일')}</div>
     <details ${editing?'open':''}><summary>상세 설정 (선택)</summary><div class="form" style="margin-top:12px">
       <label>영역<select name="area">${lifeAreas(t.area)}</select></label>
       <label>관련 Habit<select name="habitId"><option value="">연결 안 함</option>${liveHabits.map(h=>`<option value="${h.id}" ${t.habitId===h.id?'selected':''}>${esc(h.title)}</option>`).join('')}</select></label>
@@ -581,6 +686,7 @@ function personalModal(item=null){
     <div class="helper">Habit을 연결하면 그 Habit에 연결된 Goal을 자동으로 따라갑니다.</div>
     <div class="actions"><div>${editing?'<button type="button" class="btn secondary" id="lifeMoveTrash">휴지통으로 이동</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div></div>
   </form></div>`);
+  bindCalendarFields(document.querySelector('#personalForm'));
   const habitSelect=document.querySelector('[name="habitId"]'),goalSelect=document.querySelector('[name="goalId"]');
   habitSelect?.addEventListener('change',()=>{const h=liveHabits.find(x=>x.id===habitSelect.value);if(h?.goalId)goalSelect.value=h.goalId});
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
@@ -626,10 +732,11 @@ function goalModal(item=null){
   const editing=!!item,g=item||{recordType:'goal',title:'',area:'Other · 기타',targetDate:'',progress:0,note:''};
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="goalForm">
     <h2>${editing?'Goal 수정':'Goal 추가'}</h2>
-    <div class="form"><label class="full">목표명<input name="title" value="${esc(g.title)}" required autofocus></label><label>영역<select name="area">${lifeAreas(g.area)}</select></label><label>목표일<input type="date" name="targetDate" value="${esc(g.targetDate||'')}"></label><label>수동 진행률 (%)<input type="number" min="0" max="100" name="progress" value="${Number(g.progress)||0}"></label><label class="full">메모<textarea name="note">${esc(g.note||'')}</textarea></label></div>
+    <div class="form"><label class="full">목표명<input name="title" value="${esc(g.title)}" required autofocus></label><label>영역<select name="area">${lifeAreas(g.area)}</select></label>${calendarField('targetDate',g.targetDate||todayStr(),'목표일')}<label>수동 진행률 (%)<input type="number" min="0" max="100" name="progress" value="${Number(g.progress)||0}"></label><label class="full">메모<textarea name="note">${esc(g.note||'')}</textarea></label></div>
     <div class="helper">연결된 Habit의 이번 주 수행률과 Todo 완료율을 함께 계산해 Goal 진행률에 반영합니다.</div>
     <div class="actions"><div>${editing?'<button type="button" class="btn secondary" id="lifeMoveTrash">휴지통으로 이동</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div></div>
   </form></div>`);
+  bindCalendarFields(document.querySelector('#goalForm'));
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
   document.querySelector('#lifeMoveTrash')?.addEventListener('click',async()=>{await moveLifeTrash(g.id);document.querySelector('#modal').remove()});
   document.querySelector('#goalForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);await save({...g,id:editing?g.id:'g-'+Date.now(),recordType:'goal',title:String(f.get('title')||'').trim(),area:f.get('area')||'Other · 기타',targetDate:f.get('targetDate')||'',progress:Number(f.get('progress'))||0,note:String(f.get('note')||'').trim(),receivedAt:editing?(g.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});document.querySelector('#modal').remove();render()};
@@ -666,7 +773,7 @@ function taskModal(task=null,quick=false){
       </label>`:''}
       <div class="quickline">
         <label>업무명<input name="title" value="${esc(t.title)}" required autofocus></label>
-        <label>마감일<input type="date" name="due" value="${esc(t.due||todayStr())}"></label>
+        ${calendarField('due',t.due||todayStr(),'마감일')}
       </div>
       <details ${editing?'open':''}>
         <summary>상세 설정 ${editing?'':'(선택)'}</summary>
@@ -698,6 +805,7 @@ function taskModal(task=null,quick=false){
     </form>
   </div>`);
 
+  bindCalendarFields(document.querySelector('#taskForm'));
   const q=document.querySelector('#quickInput');
   if(q)q.addEventListener('change',()=>{
     const p=parseQuick(q.value),f=document.querySelector('#taskForm');
@@ -729,6 +837,7 @@ function taskModal(task=null,quick=false){
 
 function bind(){
   document.querySelector('#brandHome')?.addEventListener('click',()=>{page='home';render()});
+  document.querySelector('#sideToggle')?.addEventListener('click',()=>{sideCollapsed=!sideCollapsed;localStorage.setItem('lt_sidebar',sideCollapsed?'collapsed':'open');render()});
   document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});
   document.querySelector('#logout')?.addEventListener('click',()=>signOut(auth));
   document.querySelector('#quickAdd')?.addEventListener('click',()=>taskModal(null,true));
@@ -758,7 +867,7 @@ function render(){
     document.querySelector('#login').onclick=login;return;
   }
   const c=page==='home'?home():page==='work'?work():page==='life'?life():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));
-  root.innerHTML=`<div class="app">${side()}<main class="main">${top()}${c}</main></div>`;bind();
+  root.innerHTML=`<div class="app ${sideCollapsed?'side-collapsed':''}">${side()}<main class="main">${top()}${c}</main></div>`;bind();
 }
 render();
 </script>
