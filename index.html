@@ -98,6 +98,33 @@ summary{cursor:pointer;font-size:12px;color:#6f675d}
   .auth{grid-template-columns:1fr;padding:30px}.auth .logo{font-size:54px}.login h1{font-size:40px}
   .quickline{grid-template-columns:1fr}
 }
+
+.life-top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.life-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.life-wide{grid-column:1/-1}
+.life-item{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid #e6ded3}
+.life-item:first-of-type{border-top:0}
+.life-title{cursor:pointer}
+.life-title b{font-size:13px}
+.life-title small{display:block;color:#8c857b;margin-top:3px}
+.area{font-size:10px;padding:5px 8px;border-radius:999px;background:#eee7dc;white-space:nowrap}
+.habit-row{display:grid;grid-template-columns:minmax(130px,1fr) repeat(7,32px) 48px 28px;gap:6px;align-items:center;padding:10px 0;border-top:1px solid #e6ded3}
+.habit-row:first-of-type{border-top:0}
+.habit-day{height:30px;border:1px solid #d2c8ba;background:#fffaf4;border-radius:9px;font-size:10px}
+.habit-day.on{background:#171614;color:#fff;border-color:#171614}
+.habit-head{font-size:10px;color:#8c857b;text-align:center}
+.goal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.goal-card{border:1px solid #e2d9cd;background:#fffaf4;border-radius:14px;padding:14px}
+.goal-card h4{margin:8px 0 6px;font-size:14px;cursor:pointer}
+.goal-card small{color:#8c857b}
+.progress{height:7px;background:#e8e0d5;border-radius:999px;margin-top:12px;overflow:hidden}
+.progress i{display:block;height:100%;background:#171614;border-radius:999px}
+.life-trash-list{display:grid;gap:8px}
+.trash-line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #e6ded3}
+.trash-line:first-child{border-top:0}
+.mini-actions{display:flex;gap:5px}
+@media(max-width:1000px){.life-grid{grid-template-columns:1fr}.goal-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.goal-grid{grid-template-columns:1fr}.habit-row{grid-template-columns:1fr repeat(7,28px)}.habit-row>:nth-last-child(-n+2){display:none}}
 </style>
 </head>
 <body>
@@ -143,7 +170,7 @@ function dueLabel(t){
   return d===0?'오늘':d===1?'내일':d<0?`${-d}일 지남`:`${d}일 남음`;
 }
 function toast(x){const e=document.createElement('div');e.className='toast';e.textContent=x;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
-function activeTasks(){return tasks.filter(t=>!t.deletedAt)}
+function activeTasks(){return workItems().filter(t=>!t.deletedAt)}
 function visibleOpen(){return activeTasks().filter(t=>t.status!=='done')}
 
 function subscribe(){
@@ -157,13 +184,19 @@ onAuthStateChanged(auth,u=>{user=u;if(u)subscribe();else{tasks=[];if(unsub)unsub
 async function login(){await signInWithPopup(auth,new GoogleAuthProvider())}
 
 async function save(t){
-  await setDoc(doc(db,'users',user.uid,'tasks',t.id),{
-    title:t.title||'',requester:t.requester||'',channel:t.channel||'',project:t.project||'',
-    category:t.category||'기타',priority:t.priority||'medium',due:t.due||todayStr(),
-    receivedAt:t.receivedAt||new Date().toISOString(),status:t.status||'todo',
-    note:t.note||'',completedAt:t.completedAt||null,deletedAt:t.deletedAt||null
-  },{merge:true});
+  const data={...t}; delete data.id;
+  Object.keys(data).forEach(k=>data[k]===undefined&&delete data[k]);
+  await setDoc(doc(db,'users',user.uid,'tasks',t.id),data,{merge:true});
 }
+function workItems(){return tasks.filter(t=>(!t.recordType||t.recordType==='work'))}
+function lifeTodos(){return tasks.filter(t=>t.recordType==='personal')}
+function habits(){return tasks.filter(t=>t.recordType==='habit')}
+function goals(){return tasks.filter(t=>t.recordType==='goal')}
+function liveLife(type){return tasks.filter(t=>t.recordType===type&&!t.deletedAt)}
+function weekDates(){
+  const d=startOfWeek(),arr=[]; for(let i=0;i<7;i++){const x=new Date(d);x.setDate(d.getDate()+i);arr.push(iso(x))} return arr;
+}
+function weekdayLabel(dateStr){return ['일','월','화','수','목','금','토'][new Date(dateStr+'T00:00:00').getDay()]}
 async function moveTrash(id){
   const t=tasks.find(x=>x.id===id); if(!t)return;
   if(confirm(`"${t.title}" 업무를 휴지통으로 이동할까요?`)){await save({...t,deletedAt:new Date().toISOString()});toast('휴지통으로 이동했습니다.')}
@@ -253,7 +286,7 @@ function home(){
 }
 
 function filtered(){
-  let list=tasks;
+  let list=workItems();
   if(tab!=='trash')list=list.filter(t=>!t.deletedAt);
   if(tab==='active')list=list.filter(t=>t.status!=='done');
   if(tab==='today')list=list.filter(t=>t.status!=='done'&&t.due===todayStr());
@@ -307,6 +340,149 @@ function trashRow(t){
   </div>`;
 }
 
+
+function life(){
+  const todos=liveLife('personal');
+  const hs=liveLife('habit');
+  const gs=liveLife('goal');
+  const today=todos.filter(t=>t.status!=='done'&&t.due===todayStr());
+  const week=todos.filter(t=>t.status!=='done'&&inThisWeek(t.due));
+  const doneToday=todos.filter(isTodayCompleted);
+  const dates=weekDates();
+  const habitDone=hs.reduce((sum,h)=>sum+dates.filter(d=>h.logs?.[d]).length,0);
+  const habitTarget=hs.reduce((sum,h)=>sum+(Number(h.targetPerWeek)||7),0);
+  const habitRate=habitTarget?Math.min(100,Math.round(habitDone/habitTarget*100)):0;
+  const ordered=[...todos].filter(t=>t.status!=='done').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  return `<section>
+    <div class="hero">
+      <div><h1>Life</h1><p>개인 할 일, 반복 습관, 목표를 한 화면에서 관리합니다.</p></div>
+      <div class="life-top-actions">
+        <button class="btn secondary" id="lifeTrash">휴지통</button>
+        <button class="btn secondary" id="addGoal">＋ Goal</button>
+        <button class="btn secondary" id="addHabit">＋ Habit</button>
+        <button class="btn" id="addPersonal">＋ 개인 할 일</button>
+      </div>
+    </div>
+    <div class="metrics">
+      <div class="m y">오늘 할 일<b>${today.length}</b></div>
+      <div class="m p">이번 주 할 일<b>${week.length}</b></div>
+      <div class="m g">Habit 달성<b>${habitRate}%</b></div>
+      <div class="m b">활성 Goal<b>${gs.length}</b></div>
+    </div>
+    <div class="life-grid" style="margin-top:14px">
+      <div class="card">
+        <h3>개인 할 일</h3>
+        ${ordered.slice(0,12).map(personalRow).join('')||'<p>남아 있는 개인 할 일이 없습니다.</p>'}
+        ${doneToday.length?'<div class="helper">오늘 완료 '+doneToday.length+'개</div>':''}
+      </div>
+      <div class="card">
+        <h3>이번 주 Habit</h3>
+        <div class="habit-row">
+          <div></div>${dates.map(d=>`<div class="habit-head">${weekdayLabel(d)}</div>`).join('')}<div class="habit-head">주간</div><div></div>
+        </div>
+        ${hs.map(h=>habitRow(h,dates)).join('')||'<p>등록된 Habit이 없습니다.</p>'}
+      </div>
+      <div class="card life-wide">
+        <h3>Goal</h3>
+        <div class="goal-grid">${gs.map(goalCard).join('')||'<p>등록된 Goal이 없습니다.</p>'}</div>
+      </div>
+    </div>
+  </section>`;
+}
+function personalRow(t){
+  const g=goals().find(x=>x.id===t.goalId);
+  return `<div class="life-item">
+    <div class="check ${t.status==='done'?'done':''}" data-personal-done="${t.id}">${t.status==='done'?'✓':''}</div>
+    <div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.area||'Personal')}${g?' · '+esc(g.title):''}</small></div>
+    <span class="due ${t.due&&dd(t.due)<0?'late':''}">${dueLabel(t)}</span>
+  </div>`;
+}
+function habitRow(h,dates){
+  const count=dates.filter(d=>h.logs?.[d]).length,target=Number(h.targetPerWeek)||7;
+  return `<div class="habit-row">
+    <div class="life-title" data-habit-edit="${h.id}"><b>${esc(h.title)}</b><small>주 ${target}회 목표</small></div>
+    ${dates.map(d=>`<button class="habit-day ${h.logs?.[d]?'on':''}" data-habit="${h.id}" data-date="${d}">${h.logs?.[d]?'✓':''}</button>`).join('')}
+    <div style="font-size:11px;text-align:center">${count}/${target}</div>
+    <button class="linkbtn" data-life-trash="${h.id}">삭제</button>
+  </div>`;
+}
+function goalCard(g){
+  const linked=lifeTodos().filter(t=>!t.deletedAt&&t.goalId===g.id);
+  const done=linked.filter(t=>t.status==='done').length;
+  const progress=linked.length?Math.round(done/linked.length*100):Number(g.progress)||0;
+  return `<div class="goal-card">
+    <span class="area">${esc(g.area||'Personal')}</span>
+    <h4 data-goal-edit="${g.id}">${esc(g.title)}</h4>
+    <small>${g.targetDate?'목표 '+esc(g.targetDate):'목표일 없음'} · ${linked.length?done+'/'+linked.length+' 완료':'연결 Todo 없음'}</small>
+    <div class="progress"><i style="width:${Math.max(0,Math.min(100,progress))}%"></i></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px"><small>${progress}%</small><button class="linkbtn" data-life-trash="${g.id}">삭제</button></div>
+  </div>`;
+}
+function lifeAreas(selected='Personal'){
+  const areas=['Career','Side Project','Church','Health','Relationship','Finance','Personal'];
+  return areas.map(v=>`<option ${selected===v?'selected':''}>${v}</option>`).join('');
+}
+function personalModal(item=null){
+  const editing=!!item,t=item||{recordType:'personal',title:'',due:todayStr(),area:'Personal',status:'todo',goalId:'',repeat:'none',note:''};
+  const liveGoals=liveLife('goal');
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="personalForm">
+    <h2>${editing?'개인 할 일 수정':'개인 할 일 추가'}</h2>
+    <div class="quickline"><label>할 일<input name="title" value="${esc(t.title)}" required autofocus></label><label>마감일<input type="date" name="due" value="${esc(t.due||todayStr())}"></label></div>
+    <details ${editing?'open':''}><summary>상세 설정 (선택)</summary><div class="form" style="margin-top:12px">
+      <label>영역<select name="area">${lifeAreas(t.area)}</select></label>
+      <label>관련 Goal<select name="goalId"><option value="">연결 안 함</option>${liveGoals.map(g=>`<option value="${g.id}" ${t.goalId===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>
+      <label>반복<select name="repeat"><option value="none" ${t.repeat==='none'?'selected':''}>반복 없음</option><option value="weekly" ${t.repeat==='weekly'?'selected':''}>매주</option><option value="monthly" ${t.repeat==='monthly'?'selected':''}>매월</option></select></label>
+      <label>상태<select name="status"><option value="todo" ${t.status==='todo'?'selected':''}>할 일</option><option value="done" ${t.status==='done'?'selected':''}>완료</option></select></label>
+      <label class="full">메모<textarea name="note">${esc(t.note||'')}</textarea></label>
+    </div></details>
+    <div class="actions"><div>${editing?'<button type="button" class="btn secondary" id="lifeMoveTrash">휴지통으로 이동</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div></div>
+  </form></div>`);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelector('#lifeMoveTrash')?.addEventListener('click',async()=>{await moveLifeTrash(t.id);document.querySelector('#modal').remove()});
+  document.querySelector('#personalForm').onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target),status=f.get('status')||'todo';
+    await save({...t,id:editing?t.id:'p-'+Date.now(),recordType:'personal',title:String(f.get('title')||'').trim(),due:f.get('due')||todayStr(),area:f.get('area')||'Personal',goalId:f.get('goalId')||'',repeat:f.get('repeat')||'none',status,note:String(f.get('note')||'').trim(),receivedAt:editing?(t.receivedAt||new Date().toISOString()):new Date().toISOString(),completedAt:status==='done'?(t.completedAt||new Date().toISOString()):null,deletedAt:null});
+    document.querySelector('#modal').remove();render();
+  };
+}
+function habitModal(item=null){
+  const editing=!!item,h=item||{recordType:'habit',title:'',targetPerWeek:7,logs:{},area:'Personal'};
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="habitForm">
+    <h2>${editing?'Habit 수정':'Habit 추가'}</h2>
+    <div class="form"><label class="full">Habit 이름<input name="title" value="${esc(h.title)}" required autofocus></label><label>주간 목표 횟수<input type="number" min="1" max="7" name="target" value="${Number(h.targetPerWeek)||7}"></label><label>영역<select name="area">${lifeAreas(h.area)}</select></label></div>
+    <div class="actions"><div>${editing?'<button type="button" class="btn secondary" id="lifeMoveTrash">휴지통으로 이동</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div></div>
+  </form></div>`);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelector('#lifeMoveTrash')?.addEventListener('click',async()=>{await moveLifeTrash(h.id);document.querySelector('#modal').remove()});
+  document.querySelector('#habitForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);await save({...h,id:editing?h.id:'h-'+Date.now(),recordType:'habit',title:String(f.get('title')||'').trim(),targetPerWeek:Number(f.get('target'))||7,area:f.get('area')||'Personal',logs:h.logs||{},receivedAt:editing?(h.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});document.querySelector('#modal').remove();render()};
+}
+function goalModal(item=null){
+  const editing=!!item,g=item||{recordType:'goal',title:'',area:'Personal',targetDate:'',progress:0,note:''};
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="goalForm">
+    <h2>${editing?'Goal 수정':'Goal 추가'}</h2>
+    <div class="form"><label class="full">목표명<input name="title" value="${esc(g.title)}" required autofocus></label><label>영역<select name="area">${lifeAreas(g.area)}</select></label><label>목표일<input type="date" name="targetDate" value="${esc(g.targetDate||'')}"></label><label>수동 진행률 (%)<input type="number" min="0" max="100" name="progress" value="${Number(g.progress)||0}"></label><label class="full">메모<textarea name="note">${esc(g.note||'')}</textarea></label></div>
+    <div class="helper">관련 Todo가 하나라도 연결되면 진행률은 연결된 Todo 완료율을 우선 표시합니다.</div>
+    <div class="actions"><div>${editing?'<button type="button" class="btn secondary" id="lifeMoveTrash">휴지통으로 이동</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div></div>
+  </form></div>`);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelector('#lifeMoveTrash')?.addEventListener('click',async()=>{await moveLifeTrash(g.id);document.querySelector('#modal').remove()});
+  document.querySelector('#goalForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);await save({...g,id:editing?g.id:'g-'+Date.now(),recordType:'goal',title:String(f.get('title')||'').trim(),area:f.get('area')||'Personal',targetDate:f.get('targetDate')||'',progress:Number(f.get('progress'))||0,note:String(f.get('note')||'').trim(),receivedAt:editing?(g.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});document.querySelector('#modal').remove();render()};
+}
+async function toggleHabit(id,date){
+  const h=tasks.find(x=>x.id===id);if(!h)return;const logs={...(h.logs||{})};logs[date]=!logs[date];await save({...h,logs});
+}
+async function moveLifeTrash(id){
+  const x=tasks.find(t=>t.id===id);if(!x)return;
+  if(confirm(`"${x.title}" 항목을 휴지통으로 이동할까요?`)){await save({...x,deletedAt:new Date().toISOString()});toast('휴지통으로 이동했습니다.')}
+}
+function lifeTrashModal(){
+  const deleted=tasks.filter(t=>['personal','habit','goal'].includes(t.recordType)&&t.deletedAt);
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet"><h2>Life 휴지통</h2><div class="life-trash-list">${deleted.map(x=>`<div class="trash-line"><div><b>${esc(x.title)}</b><div class="helper">${x.recordType}</div></div><div class="mini-actions"><button class="btn secondary" data-life-restore="${x.id}">복구</button><button class="btn danger" data-life-hard="${x.id}">완전 삭제</button></div></div>`).join('')||'<p>휴지통이 비어 있습니다.</p>'}</div><div class="actions"><div></div><button class="btn secondary" id="cancel">닫기</button></div></div></div>`);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelectorAll('[data-life-restore]').forEach(b=>b.onclick=async()=>{const x=tasks.find(t=>t.id===b.dataset.lifeRestore);if(x)await save({...x,deletedAt:null});document.querySelector('#modal').remove();render()});
+  document.querySelectorAll('[data-life-hard]').forEach(b=>b.onclick=async()=>{const x=tasks.find(t=>t.id===b.dataset.lifeHard);if(x&&confirm('완전히 삭제할까요?'))await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));document.querySelector('#modal').remove();render()});
+}
+
 function placeholder(n){
   const ko={Life:'개인 할 일과 습관을 관리하는 영역입니다.',Time:'시간 사용을 기록하고 주간 흐름을 보는 영역입니다.',Finance:'소비와 예산을 관리하는 영역입니다.'};
   return `<div class="placeholder"><div class="card"><small>다음 구축 영역</small><h1 style="font-size:42px;margin:10px 0">${n}</h1><p>${ko[n]||'다음 단계에서 연결합니다.'}</p></div></div>`;
@@ -314,7 +490,7 @@ function placeholder(n){
 
 function taskModal(task=null,quick=false){
   const editing=!!task;
-  const t=task||{title:'',due:todayStr(),requester:'',channel:'Slack',project:'',category:'기타',priority:'medium',note:'',status:'todo'};
+  const t=task||{recordType:'work',title:'',due:todayStr(),requester:'',channel:'Slack',project:'',category:'기타',priority:'medium',note:'',status:'todo'};
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal">
     <form class="sheet" id="taskForm">
       <h2>${editing?'업무 수정':quick?'빠른 업무 추가':'업무 추가'}</h2>
@@ -367,7 +543,7 @@ function taskModal(task=null,quick=false){
     e.preventDefault();const f=new FormData(e.target);
     const status=f.get('status')||'todo';
     const obj={
-      ...t,id:editing?t.id:'t-'+Date.now(),
+      ...t,id:editing?t.id:'t-'+Date.now(),recordType:'work',
       title:String(f.get('title')||'').trim(),
       due:f.get('due')||todayStr(),
       requester:String(f.get('requester')||'').trim(),
@@ -399,13 +575,23 @@ function bind(){
   document.querySelectorAll('[data-trash]').forEach(b=>b.onclick=()=>moveTrash(b.dataset.trash));
   document.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>restoreTask(b.dataset.restore));
   document.querySelectorAll('[data-harddelete]').forEach(b=>b.onclick=()=>hardDelete(b.dataset.harddelete));
+  document.querySelector('#addPersonal')?.addEventListener('click',()=>personalModal());
+  document.querySelector('#addHabit')?.addEventListener('click',()=>habitModal());
+  document.querySelector('#addGoal')?.addEventListener('click',()=>goalModal());
+  document.querySelector('#lifeTrash')?.addEventListener('click',lifeTrashModal);
+  document.querySelectorAll('[data-personal-done]').forEach(b=>b.onclick=async()=>{const t=tasks.find(x=>x.id===b.dataset.personalDone);if(t){const next=t.status==='done'?'todo':'done';await save({...t,status:next,completedAt:next==='done'?new Date().toISOString():null})}});
+  document.querySelectorAll('[data-personal-edit]').forEach(b=>b.onclick=()=>{const t=tasks.find(x=>x.id===b.dataset.personalEdit);if(t)personalModal(t)});
+  document.querySelectorAll('[data-habit]').forEach(b=>b.onclick=()=>toggleHabit(b.dataset.habit,b.dataset.date));
+  document.querySelectorAll('[data-habit-edit]').forEach(b=>b.onclick=()=>{const h=tasks.find(x=>x.id===b.dataset.habitEdit);if(h)habitModal(h)});
+  document.querySelectorAll('[data-goal-edit]').forEach(b=>b.onclick=()=>{const g=tasks.find(x=>x.id===b.dataset.goalEdit);if(g)goalModal(g)});
+  document.querySelectorAll('[data-life-trash]').forEach(b=>b.onclick=()=>moveLifeTrash(b.dataset.lifeTrash));
 }
 function render(){
   if(!user){
     root.innerHTML=`<div class="auth"><div class="logo">Life Tracker</div><div class="login"><small>PERSONAL OPERATING SYSTEM</small><h1>일과 삶을<br>한 곳에서.</h1><p>업무, 개인 할 일, 시간, 소비를 하나의 대시보드에서 기록하고 관리합니다.</p><button class="btn" id="login">Google로 계속하기</button></div></div>`;
     document.querySelector('#login').onclick=login;return;
   }
-  const c=page==='home'?home():page==='work'?work():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));
+  const c=page==='home'?home():page==='work'?work():page==='life'?life():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));
   root.innerHTML=`<div class="app">${side()}<main class="main">${top()}${c}</main></div>`;bind();
 }
 render();
