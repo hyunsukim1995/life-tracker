@@ -281,6 +281,32 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
 .date-inline{font-size:10px;color:#9aa2a9;display:block;margin-top:3px}
 @media(max-width:760px){.app.side-collapsed{grid-template-columns:1fr}}
 
+
+/* --- TIME V1 --- */
+.time-grid{display:grid;grid-template-columns:72px repeat(7,minmax(92px,1fr));gap:4px;overflow:auto}
+.time-head,.time-label,.time-cell{min-height:34px;border:1px solid #2f3137;background:#18191d}
+.time-head{display:grid;place-items:center;color:#9b968d;font-size:11px;background:#202228}
+.time-label{display:flex;align-items:center;justify-content:flex-end;padding-right:10px;color:#77736c;font-size:10px;background:transparent;border-color:transparent}
+.time-cell{cursor:pointer;position:relative}
+.time-cell:hover{border-color:#59616a}
+.time-cell.filled:after{content:'';position:absolute;inset:4px;border-radius:3px;background:var(--slot,#3a4650)}
+.time-cell .slot-label{position:relative;z-index:1;font-size:9px;color:#eee;display:grid;place-items:center;height:100%;padding:2px;text-align:center;line-height:1.1}
+.time-summary{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+.balance-list{display:grid;gap:8px}
+.balance-row{display:grid;grid-template-columns:150px 1fr 52px;gap:10px;align-items:center}
+.balance-row span{font-size:11px;color:#b6b0a6}
+.balance-track{height:10px;background:#282a2f;border-radius:3px;overflow:hidden}
+.balance-track i{display:block;height:100%;background:#667986}
+.time-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.time-legend .area{display:flex;align-items:center;gap:6px}
+.time-dot{width:9px;height:9px;border-radius:2px;background:var(--dot)}
+.time-actions{display:flex;gap:8px;flex-wrap:wrap}
+.slot-picker{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot-option{border:1px solid #34363d;background:#1c1e22;color:#d6d1c7;padding:11px;border-radius:7px;text-align:left}
+.slot-option:hover{background:#25282e}
+.slot-option small{display:block;color:#8f8a81;margin-top:3px}
+@media(max-width:1000px){.time-summary{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -349,6 +375,20 @@ function lifeTodos(){return tasks.filter(t=>t.recordType==='personal')}
 function habits(){return tasks.filter(t=>t.recordType==='habit')}
 function goals(){return tasks.filter(t=>t.recordType==='goal')}
 function liveLife(type){return tasks.filter(t=>t.recordType===type&&!t.deletedAt)}
+function timeBlocks(){return tasks.filter(t=>t.recordType==='timeblock'&&!t.deletedAt)}
+const TIME_CATS=[
+  {key:'spirit',label:'For spirit',ko:'영을 위해',color:'#596b78'},
+  {key:'knowledge',label:'For knowledge',ko:'지식을 위해',color:'#66717c'},
+  {key:'health',label:'For health',ko:'건강을 위해',color:'#536d6c'},
+  {key:'relationship',label:'For relationship',ko:'교류를 위해',color:'#706b7a'},
+  {key:'finance',label:'For finance',ko:'자산을 위해',color:'#596975'},
+  {key:'career',label:'For career',ko:'커리어를 위해',color:'#68778a'},
+  {key:'joy',label:'For joy',ko:'행복을 위해',color:'#756c69'},
+  {key:'sleep',label:'Sleep',ko:'수면',color:'#444b56'},
+  {key:'other',label:'Other',ko:'기타',color:'#55585e'}
+];
+function timeCat(key){return TIME_CATS.find(x=>x.key===key)||TIME_CATS[TIME_CATS.length-1]}
+
 function weekDates(){
   const d=startOfWeek(),arr=[]; for(let i=0;i<7;i++){const x=new Date(d);x.setDate(d.getDate()+i);arr.push(iso(x))} return arr;
 }
@@ -756,6 +796,62 @@ function lifeTrashModal(){
   document.querySelectorAll('[data-life-hard]').forEach(b=>b.onclick=async()=>{const x=tasks.find(t=>t.id===b.dataset.lifeHard);if(x&&confirm('완전히 삭제할까요?'))await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));document.querySelector('#modal').remove();render()});
 }
 
+
+function timePage(){
+  const dates=weekDates();
+  const blocks=timeBlocks();
+  const hours=Array.from({length:24},(_,i)=>i);
+  const byKey=new Map(blocks.map(b=>[b.date+'_'+b.hour,b]));
+  const totals={};TIME_CATS.forEach(c=>totals[c.key]=0);
+  blocks.filter(b=>dates.includes(b.date)).forEach(b=>{totals[b.category]=(totals[b.category]||0)+1});
+  const total=Object.values(totals).reduce((a,b)=>a+b,0);
+  return `<section class="page-time">
+    <div class="hero">
+      <div><h1>Time</h1><p>이번 주 168시간을 1시간 단위로 기록하고, 어디에 시간을 썼는지 봅니다.</p></div>
+      <div class="time-actions"><button class="btn secondary" id="clearWeekTime">이번 주 비우기</button></div>
+    </div>
+    <div class="card">
+      <div class="section-head">${doodleIcon('time')}<h3>Weekly time blocks</h3></div>
+      <div class="time-grid">
+        <div class="time-head">시간</div>
+        ${dates.map(d=>`<div class="time-head">${formatDateKo(d)} </div>`).join('')}
+        ${hours.map(h=>`
+          <div class="time-label">${String(h).padStart(2,'0')}:00</div>
+          ${dates.map(d=>{const b=byKey.get(d+'_'+h),c=b?timeCat(b.category):null;return `<button class="time-cell ${b?'filled':''}" style="${b?'--slot:'+c.color:''}" data-time-date="${d}" data-time-hour="${h}">${b?`<span class="slot-label">${esc(c.label)}</span>`:''}</button>`}).join('')}
+        `).join('')}
+      </div>
+    </div>
+    <div class="time-summary">
+      <div class="card">
+        <div class="section-head">${doodleIcon('scribble')}<h3>Category balance</h3></div>
+        <div class="helper">이번 주 실제 시간 사용 비중입니다.</div>
+        <div class="balance-list">
+          ${TIME_CATS.map(c=>{const n=totals[c.key]||0,p=total?Math.round(n/total*100):0;return `<div class="balance-row"><span>${esc(c.label)} · ${esc(c.ko)}</span><div class="balance-track"><i style="width:${p}%;background:${c.color}"></i></div><b>${n}h</b></div>`}).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head">${doodleIcon('star')}<h3>Weekly summary</h3></div>
+        <div class="kv"><span>기록한 시간</span><b>${total}h</b></div>
+        <div class="kv"><span>기록률</span><b>${Math.round(total/168*100)}%</b></div>
+        <div class="kv"><span>가장 많이 쓴 영역</span><b>${(()=>{const top=TIME_CATS.slice().sort((a,b)=>(totals[b.key]||0)-(totals[a.key]||0))[0];return totals[top.key]?top.label:'-'})()}</b></div>
+        <div class="time-legend">${TIME_CATS.map(c=>`<span class="area"><i class="time-dot" style="--dot:${c.color}"></i>${c.label}</span>`).join('')}</div>
+      </div>
+    </div>
+  </section>`;
+}
+function timeBlockModal(date,hour){
+  const existing=timeBlocks().find(b=>b.date===date&&b.hour===hour);
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet"><h2>${formatDateKo(date,true)} · ${String(hour).padStart(2,'0')}:00</h2><div class="slot-picker">
+    ${TIME_CATS.map(c=>`<button class="slot-option" data-slot-cat="${c.key}"><b>${esc(c.label)}</b><small>${esc(c.ko)}</small></button>`).join('')}
+  </div><div class="actions"><div>${existing?'<button class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><button class="btn secondary" id="cancel">취소</button></div></div></div>`);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelectorAll('[data-slot-cat]').forEach(b=>b.onclick=async()=>{
+    const item={...(existing||{}),id:existing?.id||'tb-'+date+'-'+hour,recordType:'timeblock',date,hour,category:b.dataset.slotCat,receivedAt:existing?.receivedAt||new Date().toISOString(),deletedAt:null};
+    await save(item);document.querySelector('#modal').remove();render();
+  });
+  document.querySelector('#removeTimeBlock')?.addEventListener('click',async()=>{if(existing)await deleteDoc(doc(db,'users',user.uid,'tasks',existing.id));document.querySelector('#modal').remove();render()});
+}
+
 function placeholder(n){
   const ko={Life:'개인 할 일과 습관을 관리하는 영역입니다.',Time:'시간 사용을 기록하고 주간 흐름을 보는 영역입니다.',Finance:'소비와 예산을 관리하는 영역입니다.'};
   return `<div class="placeholder"><div class="card"><small>다음 구축 영역</small><h1 style="font-size:42px;margin:10px 0">${n}</h1><p>${ko[n]||'다음 단계에서 연결합니다.'}</p></div></div>`;
@@ -860,13 +956,15 @@ function bind(){
   document.querySelectorAll('[data-habit-edit]').forEach(b=>b.onclick=()=>{const h=tasks.find(x=>x.id===b.dataset.habitEdit);if(h)habitModal(h)});
   document.querySelectorAll('[data-goal-edit]').forEach(b=>b.onclick=()=>{const g=tasks.find(x=>x.id===b.dataset.goalEdit);if(g)goalModal(g)});
   document.querySelectorAll('[data-life-trash]').forEach(b=>b.onclick=()=>moveLifeTrash(b.dataset.lifeTrash));
+  document.querySelectorAll('[data-time-date]').forEach(b=>b.onclick=()=>timeBlockModal(b.dataset.timeDate,Number(b.dataset.timeHour)));
+  document.querySelector('#clearWeekTime')?.addEventListener('click',async()=>{if(!confirm('이번 주 시간 기록을 전부 비울까요?'))return;const dates=weekDates();const list=timeBlocks().filter(b=>dates.includes(b.date));for(const x of list)await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));render()});
 }
 function render(){
   if(!user){
     root.innerHTML=`<div class="auth"><div class="logo">Life Tracker</div><div class="login"><small>PERSONAL OPERATING SYSTEM</small><h1>일과 삶을<br>한 곳에서.</h1><p>업무, 개인 할 일, 시간, 소비를 하나의 대시보드에서 기록하고 관리합니다.</p><button class="btn" id="login">Google로 계속하기</button></div></div>`;
     document.querySelector('#login').onclick=login;return;
   }
-  const c=page==='home'?home():page==='work'?work():page==='life'?life():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));
+  const c=page==='home'?home():page==='work'?work():page==='life'?life():page==='time'?timePage():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));
   root.innerHTML=`<div class="app ${sideCollapsed?'side-collapsed':''}">${side()}<main class="main">${top()}${c}</main></div>`;bind();
 }
 render();
