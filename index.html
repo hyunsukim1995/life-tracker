@@ -1,26 +1,414 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Life Tracker</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f3ecdf;color:#171614;font-family:Arial,sans-serif}button,input,select,textarea{font:inherit}.app{display:grid;grid-template-columns:190px 1fr;min-height:100vh}.side{background:#11110f;color:#fff;padding:22px 16px;display:flex;flex-direction:column}.brand{font:32px Georgia,serif;margin:4px 10px 28px}.nav button{width:100%;border:0;background:transparent;color:#bdbab4;padding:11px 12px;border-radius:12px;text-align:left;margin:3px 0}.nav button.on,.nav button:hover{background:#2b2a27;color:#fff}.me{margin-top:auto;padding:12px;border-top:1px solid #333;font-size:12px;color:#aaa}.main{padding:22px 28px}.top{display:flex;align-items:center;gap:14px}.search{flex:1;max-width:520px;border:1px solid #d8d0c4;background:#fbf7ef;border-radius:12px;padding:10px 12px}.sync{margin-left:auto;font-size:11px;color:#777}.hero{display:flex;justify-content:space-between;align-items:flex-end;margin:38px 0 18px}.hero h1{font:54px Georgia,serif;margin:0;letter-spacing:-2px}.hero p{margin:8px 0 0;color:#7c756b}.btn{border:0;border-radius:999px;padding:11px 16px;background:#171614;color:#fff;cursor:pointer}.ghost{background:#fff0;border:1px solid #cfc5b7;color:#171614}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.m{border-radius:18px;padding:18px;min-height:110px}.m b{font:34px Georgia,serif;display:block;margin-top:8px}.y{background:#f6d981}.p{background:#edb8cc}.g{background:#c6d6a9}.b{background:#bdd2ef}.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}.card{background:#fbf7ef;border:1px solid #ddd4c7;border-radius:18px;padding:18px}.card h3{font:22px Georgia,serif;margin:0 0 14px}.task{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;border-top:1px solid #e6ded3;padding:11px 0}.task:first-of-type{border-top:0}.task small{display:block;color:#8c857b;margin-top:3px}.due{font-size:11px;padding:5px 8px;border-radius:999px;background:#eee7dc}.late{background:#f3d7d4;color:#9c3f39}.tabs{display:flex;gap:6px;margin:10px 0 14px}.tabs button{border:1px solid #d5ccbf;background:#fbf7ef;border-radius:999px;padding:8px 11px;font-size:12px}.tabs button.on{background:#171614;color:#fff}.table{background:#fbf7ef;border:1px solid #ddd4c7;border-radius:18px;overflow:hidden}.row{display:grid;grid-template-columns:34px 2fr .9fr .8fr .9fr .7fr .8fr;gap:8px;align-items:center;padding:12px;border-top:1px solid #e7dfd4;font-size:12px}.row.head{background:#eee7dc;border-top:0;color:#777;font-size:10px}.row.click{cursor:pointer}.row.click:hover{background:#f2ece2}.check{width:18px;height:18px;border:1px solid #bbb;border-radius:5px;display:grid;place-items:center}.check.done{background:#171614;color:#fff}.pill{font-size:10px;border-radius:999px;padding:5px 8px;background:#e8e2d9}.pill.doing{background:#d8e6f8;color:#35649c}.pill.waiting{background:#f3e1ac;color:#80621e}.pill.done{background:#d7e6d0;color:#4c724a}.placeholder{display:grid;place-items:center;min-height:65vh}.placeholder .card{width:min(620px,80vw);padding:44px}.modal{position:fixed;inset:0;background:#0006;display:grid;place-items:center;padding:20px}.sheet{width:min(680px,95vw);background:#fbf7ef;border-radius:22px;padding:22px}.sheet h2{font:30px Georgia,serif;margin:4px 0 18px}.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form label{font-size:11px;color:#736c62}.form input,.form select,.form textarea{width:100%;margin-top:6px;border:1px solid #d6ccbf;background:#fffaf4;border-radius:10px;padding:10px}.form textarea{min-height:80px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.auth{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:8vw}.auth .logo{font:110px Georgia,serif;letter-spacing:-8px}.login{background:#fff8;border:1px solid #d7cdbf;border-radius:28px;padding:42px}.login h1{font:56px Georgia,serif;line-height:.95;margin:12px 0 20px}.login p{color:#71695f;line-height:1.6}.login button{width:100%;margin-top:18px;height:52px}.toast{position:fixed;right:22px;bottom:22px;background:#171614;color:#fff;padding:12px 16px;border-radius:11px;font-size:12px}@media(max-width:1000px){.metrics{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.row{grid-template-columns:30px 1.7fr .8fr .7fr .7fr}.row>:nth-child(5),.row>:nth-child(6){display:none}.app{grid-template-columns:150px 1fr}.main{padding:18px}.hero h1{font-size:42px}}@media(max-width:720px){.app{grid-template-columns:1fr}.side{display:none}.metrics{grid-template-columns:1fr 1fr}.auth{grid-template-columns:1fr;padding:30px}.auth .logo{font-size:64px}.login h1{font-size:44px}}
-.brand{cursor:pointer;font-size:27px}.me{display:grid;gap:8px}.me button{border:0;background:transparent;color:#777;text-align:left;padding:0;cursor:pointer}.me button:hover{color:#fff}.delete{border:0;background:transparent;color:#9b8f82;cursor:pointer;font-size:11px}.delete:hover{color:#b34e45}.row{grid-template-columns:34px 2fr .9fr .8fr .9fr .7fr .9fr 54px}@media(max-width:1100px){.row{grid-template-columns:30px 1.7fr .8fr .7fr .8fr .7fr 50px}.row>:nth-child(5),.row>:nth-child(7){display:none}}</style></head><body><div id="root"></div><script type="module">
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Life Tracker</title>
+<style>
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+*{box-sizing:border-box}
+:root{
+  --bg:#f3ecdf;--panel:#fbf7ef;--line:#ddd4c7;--text:#171614;--muted:#7c756b;
+  --side:#11110f;--yellow:#f6d981;--pink:#edb8cc;--green:#c6d6a9;--blue:#bdd2ef;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:190px 1fr;min-height:100vh}
+.side{background:var(--side);color:#fff;padding:22px 16px;display:flex;flex-direction:column}
+.brand{font-size:25px;font-weight:800;letter-spacing:-.04em;margin:4px 10px 28px;cursor:pointer}
+.nav button{width:100%;border:0;background:transparent;color:#bdbab4;padding:11px 12px;border-radius:12px;text-align:left;margin:3px 0}
+.nav button.on,.nav button:hover{background:#2b2a27;color:#fff}
+.me{margin-top:auto;padding:12px;border-top:1px solid #333;font-size:12px;color:#aaa;display:grid;gap:8px}
+.me button{border:0;background:transparent;color:#777;text-align:left;padding:0}
+.me button:hover{color:#fff}
+.main{padding:22px 28px}
+.top{display:flex;align-items:center;gap:14px}
+.search{flex:1;max-width:520px;border:1px solid #d8d0c4;background:var(--panel);border-radius:12px;padding:11px 13px}
+.sync{margin-left:auto;font-size:11px;color:#777}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;margin:38px 0 18px}
+.hero h1{font-size:46px;line-height:1.05;margin:0;letter-spacing:-.045em}
+.hero p{margin:10px 0 0;color:var(--muted)}
+.btn{border:0;border-radius:999px;padding:11px 16px;background:var(--text);color:#fff}
+.btn.secondary{background:transparent;border:1px solid #cfc5b7;color:var(--text)}
+.btn.danger{background:#8f3f39}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.m{border-radius:18px;padding:18px;min-height:110px}
+.m b{font-size:34px;display:block;margin-top:8px;letter-spacing:-.04em}
+.y{background:var(--yellow)}.p{background:var(--pink)}.g{background:var(--green)}.b{background:var(--blue)}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card h3{font-size:20px;margin:0 0 14px;letter-spacing:-.03em}
+.task{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;border-top:1px solid #e6ded3;padding:11px 0}
+.task:first-of-type{border-top:0}
+.task small{display:block;color:#8c857b;margin-top:3px}
+.due{font-size:11px;padding:5px 8px;border-radius:999px;background:#eee7dc}
+.late{background:#f3d7d4;color:#9c3f39}
+.tabs{display:flex;gap:6px;margin:10px 0 14px;flex-wrap:wrap}
+.tabs button{border:1px solid #d5ccbf;background:var(--panel);border-radius:999px;padding:8px 11px;font-size:12px}
+.tabs button.on{background:var(--text);color:#fff}
+.table{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.row{display:grid;grid-template-columns:34px minmax(220px,2fr) .9fr .8fr .9fr .8fr .95fr 64px;gap:8px;align-items:center;padding:12px;border-top:1px solid #e7dfd4;font-size:12px}
+.row.head{background:#eee7dc;border-top:0;color:#777;font-size:10px}
+.row.data:hover{background:#f2ece2}
+.row-title{cursor:pointer}
+.row-title b{font-size:13px}
+.row-title small{display:block;color:#8c857b;margin-top:3px}
+.check{width:18px;height:18px;border:1px solid #bbb;border-radius:5px;display:grid;place-items:center;cursor:pointer}
+.check.done{background:var(--text);color:#fff}
+.pill{font-size:10px;border-radius:999px;padding:6px 8px;background:#e8e2d9;border:0}
+.pill.doing{background:#d8e6f8;color:#35649c}.pill.waiting{background:#f3e1ac;color:#80621e}.pill.done{background:#d7e6d0;color:#4c724a}
+.linkbtn{border:0;background:transparent;color:#7e756a;font-size:11px;padding:5px}
+.linkbtn:hover{color:#111}
+.trash-actions{display:flex;gap:4px}
+.placeholder{display:grid;place-items:center;min-height:65vh}
+.placeholder .card{width:min(620px,80vw);padding:44px}
+.modal{position:fixed;inset:0;background:#0007;display:grid;place-items:center;padding:20px;z-index:20}
+.sheet{width:min(680px,95vw);max-height:90vh;overflow:auto;background:var(--panel);border-radius:22px;padding:22px}
+.sheet h2{font-size:26px;margin:4px 0 18px;letter-spacing:-.035em}
+.quickline{display:grid;grid-template-columns:1fr 150px;gap:10px;margin-bottom:12px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form label{font-size:11px;color:#736c62}
+.form input,.form select,.form textarea,.quickline input{width:100%;margin-top:6px;border:1px solid #d6ccbf;background:#fffaf4;border-radius:10px;padding:10px}
+.form textarea{min-height:80px;resize:vertical}
+.full{grid-column:1/-1}
+details{border-top:1px solid #e6ded3;margin-top:14px;padding-top:14px}
+summary{cursor:pointer;font-size:12px;color:#6f675d}
+.actions{display:flex;justify-content:space-between;gap:8px;margin-top:18px}
+.actions-right{display:flex;gap:8px}
+.auth{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:8vw}
+.auth .logo{font-size:72px;font-weight:800;letter-spacing:-.06em}
+.login{background:#fff8;border:1px solid #d7cdbf;border-radius:28px;padding:42px}
+.login h1{font-size:50px;line-height:1;margin:12px 0 20px;letter-spacing:-.05em}
+.login p{color:#71695f;line-height:1.6}
+.login button{width:100%;margin-top:18px;height:52px}
+.toast{position:fixed;right:22px;bottom:22px;background:var(--text);color:#fff;padding:12px 16px;border-radius:11px;font-size:12px;z-index:40}
+.helper{font-size:11px;color:#8d857a;margin-top:7px;line-height:1.5}
+.empty{padding:30px;color:#888}
+@media(max-width:1100px){
+  .row{grid-template-columns:30px minmax(180px,1.7fr) .8fr .7fr .8fr .7fr 58px}
+  .row>:nth-child(5),.row>:nth-child(7){display:none}
+}
+@media(max-width:1000px){
+  .metrics{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}
+  .app{grid-template-columns:150px 1fr}.main{padding:18px}.hero h1{font-size:38px}
+}
+@media(max-width:720px){
+  .app{grid-template-columns:1fr}.side{display:none}.metrics{grid-template-columns:1fr 1fr}
+  .auth{grid-template-columns:1fr;padding:30px}.auth .logo{font-size:54px}.login h1{font-size:40px}
+  .quickline{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,setPersistence,browserLocalPersistence,signOut}from'https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js';
 import{getFirestore,collection,onSnapshot,doc,setDoc,deleteDoc}from'https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js';
-const cfg={apiKey:'AIzaSyDB7PYHhy3r4f9s4JifyWJA5PKWXqazids',authDomain:'dale-life-tracker.firebaseapp.com',projectId:'dale-life-tracker',storageBucket:'dale-life-tracker.firebasestorage.app',messagingSenderId:'722368860941',appId:'1:722368860941:web:574c7741fb20f2f6ccd644',measurementId:'G-9WWYKD3HWW'};
-const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);setPersistence(auth,browserLocalPersistence);
-let user=null,tasks=[],page='home',tab='all',search='',unsub=null;const root=document.querySelector('#root');
-const iso=()=>{let d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10)},dd=d=>Math.round((new Date(d+'T00:00:00')-new Date(iso()+'T00:00:00'))/86400000),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function due(t){if(t.status==='done')return'완료';let d=dd(t.due);return d===0?'오늘':d===1?'내일':d<0?`${-d}일 지남`:`${d}일 남음`};function toast(x){let e=document.createElement('div');e.className='toast';e.textContent=x;document.body.appendChild(e);setTimeout(()=>e.remove(),2500)}
-function subscribe(){if(unsub)unsub();unsub=onSnapshot(collection(db,'users',user.uid,'tasks'),s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.receivedAt||'').localeCompare(a.receivedAt||''));render()},e=>toast('동기화 오류: '+e.message))}
+
+const cfg={
+  apiKey:'AIzaSyDB7PYHhy3r4f9s4JifyWJA5PKWXqazids',
+  authDomain:'dale-life-tracker.firebaseapp.com',
+  projectId:'dale-life-tracker',
+  storageBucket:'dale-life-tracker.firebasestorage.app',
+  messagingSenderId:'722368860941',
+  appId:'1:722368860941:web:574c7741fb20f2f6ccd644',
+  measurementId:'G-9WWYKD3HWW'
+};
+const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+setPersistence(auth,browserLocalPersistence);
+
+let user=null,tasks=[],page='home',tab='active',search='',unsub=null;
+const root=document.querySelector('#root');
+
+const iso=(d=new Date())=>new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const dd=(d)=>Math.round((new Date(d+'T00:00:00')-new Date(iso()+'T00:00:00'))/86400000);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr=()=>iso();
+
+function startOfWeek(){
+  const d=new Date(); const day=(d.getDay()+6)%7;
+  d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d;
+}
+function endOfWeek(){const d=startOfWeek();d.setDate(d.getDate()+6);return d}
+function inThisWeek(dateStr){
+  if(!dateStr)return false;
+  const d=new Date(dateStr+'T00:00:00'); return d>=startOfWeek()&&d<=endOfWeek();
+}
+function isTodayCompleted(t){return t.status==='done'&&t.completedAt&&iso(new Date(t.completedAt))===todayStr()}
+function dueLabel(t){
+  if(t.status==='done')return'완료';
+  const d=dd(t.due);
+  return d===0?'오늘':d===1?'내일':d<0?`${-d}일 지남`:`${d}일 남음`;
+}
+function toast(x){const e=document.createElement('div');e.className='toast';e.textContent=x;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+function activeTasks(){return tasks.filter(t=>!t.deletedAt)}
+function visibleOpen(){return activeTasks().filter(t=>t.status!=='done')}
+
+function subscribe(){
+  if(unsub)unsub();
+  unsub=onSnapshot(collection(db,'users',user.uid,'tasks'),s=>{
+    tasks=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.receivedAt||'').localeCompare(a.receivedAt||''));
+    render();
+  },e=>toast('동기화 오류: '+e.message));
+}
 onAuthStateChanged(auth,u=>{user=u;if(u)subscribe();else{tasks=[];if(unsub)unsub();render()}});
-async function login(){let p=new GoogleAuthProvider();await signInWithPopup(auth,p)};async function save(t){await setDoc(doc(db,'users',user.uid,'tasks',t.id),{title:t.title,requester:t.requester,channel:t.channel,project:t.project,category:t.category,priority:t.priority,due:t.due,receivedAt:t.receivedAt,status:t.status,note:t.note||'',completedAt:t.completedAt||null},{merge:true})}
-async function removeTask(id){let t=tasks.find(x=>x.id===id);if(!t)return;if(confirm(`"${t.title}" 업무를 삭제할까요?\n삭제 후 되돌릴 수 없습니다.`)){await deleteDoc(doc(db,'users',user.uid,'tasks',id));toast('업무를 삭제했습니다.')}}
-function side(){return`<aside class="side"><div class="brand" id="brandHome">Life Tracker</div><div class="nav">${[['work','Work'],['life','Life'],['time','Time'],['finance','Finance']].map(x=>`<button data-page="${x[0]}" class="${page===x[0]?'on':''}">${x[1]}</button>`).join('')}</div><div class="me"><span>${esc(user?.email||'')}</span><button id="logout">로그아웃</button></div></aside>`}
-function top(){return`<div class="top"><input id="search" class="search" placeholder="업무, 프로젝트, 요청자 검색..." value="${esc(search)}"><span class="sync">● 동기화됨</span></div>`}
-function home(){let open=tasks.filter(x=>x.status!=='done'),today=open.filter(x=>x.due===iso()),doing=open.filter(x=>x.status==='doing'),done=tasks.filter(x=>x.status==='done').length,rate=tasks.length?Math.round(done/tasks.length*100):0,late=open.filter(x=>dd(x.due)<0);return`<section><div class="hero"><div><h1>${new Date().getHours()<12?'좋은 아침이에요':new Date().getHours()<18?'좋은 오후예요':'좋은 저녁이에요'}, Dale</h1><p>오늘 해야 할 것과 이번 주 흐름을 한눈에 봅니다.</p></div><button class="btn" id="add">＋ 빠른 추가</button></div><div class="metrics"><div class="m y">남은 업무<b>${open.length}</b></div><div class="m p">오늘 마감<b>${today.length}</b></div><div class="m g">진행 중<b>${doing.length}</b></div><div class="m b">완료율<b>${rate}%</b></div></div><div class="grid"><div class="card"><h3>우선 업무</h3>${open.slice(0,6).map(t=>`<div class="task"><span class="check" data-done="${t.id}"></span><div><b>${esc(t.title)}</b><small>${esc(t.project)} · ${esc(t.requester)}</small></div><span class="due ${dd(t.due)<0?'late':''}">${due(t)}</span></div>`).join('')||'<p>남아 있는 업무가 없습니다.</p>'}</div><div class="card"><h3>이번 주 신호</h3><p>마감 지남 <b>${late.length}</b></p><p>대기 중 <b>${open.filter(x=>x.status==='waiting').length}</b></p><p>완료 <b>${done}</b></p><p style="color:#777;line-height:1.6">데이터가 쌓이면 지난주 대비 변화와 마감 준수율을 보여줍니다.</p></div></div></section>`}
-function filtered(){return tasks.filter(t=>{let ok=tab==='all'||(tab==='overdue'?t.status!=='done'&&dd(t.due)<0:t.status===tab);let q=search.toLowerCase();return ok&&(!q||[t.title,t.requester,t.project,t.channel].join(' ').toLowerCase().includes(q))})}
-function work(){let list=filtered();return`<section><div class="hero"><div><h1>Work</h1><p>받은 업무를 기록하고, 마감과 상태를 추적합니다.</p></div><button class="btn" id="add">＋ 업무 추가</button></div><div class="tabs">${[['all','전체'],['todo','할 일'],['doing','진행 중'],['waiting','대기'],['overdue','마감 지남'],['done','완료']].map(x=>`<button data-tab="${x[0]}" class="${tab===x[0]?'on':''}">${x[1]}</button>`).join('')}</div><div class="table"><div class="row head"><div></div><div>업무</div><div>요청자</div><div>채널</div><div>프로젝트</div><div>마감</div><div>상태</div><div></div></div>${list.map(t=>`<div class="row click"><div class="check ${t.status==='done'?'done':''}" data-done="${t.id}">${t.status==='done'?'✓':''}</div><div><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div><div>${esc(t.requester)}</div><div>${esc(t.channel)}</div><div>${esc(t.project)}</div><div class="${dd(t.due)<0&&t.status!=='done'?'late':''}">${due(t)}</div><div><select data-status="${t.id}" class="pill ${t.status}"><option value="todo" ${t.status==='todo'?'selected':''}>할 일</option><option value="doing" ${t.status==='doing'?'selected':''}>진행 중</option><option value="waiting" ${t.status==='waiting'?'selected':''}>대기</option><option value="done" ${t.status==='done'?'selected':''}>완료</option></select></div><button class="delete" data-delete="${t.id}">삭제</button></div>`).join('')||'<div style="padding:30px;color:#888">조건에 맞는 업무가 없습니다.</div>'}</div></section>`}
-function placeholder(n){let ko={Life:'개인 할 일과 습관을 관리하는 영역입니다.',Time:'시간 사용을 기록하고 주간 흐름을 보는 영역입니다.',Finance:'소비와 예산을 관리하는 영역입니다.'};return`<div class="placeholder"><div class="card"><small>다음 구축 영역</small><h1 style="font:48px Georgia,serif">${n}</h1><p>${ko[n]||'다음 단계에서 연결합니다.'}</p></div></div>`}
-function modal(){document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="form"><h2>업무 추가</h2><div class="form"><label class="full">업무명<input name="title" required autofocus></label><label>요청자<input name="requester"></label><label>요청 채널<select name="channel"><option>Slack</option><option>Email</option><option>Meeting</option><option>Kakao</option><option>Call</option><option>Other</option></select></label><label>프로젝트<input name="project"></label><label>업무 카테고리<input name="category" value="기타"></label><label>마감일<input type="date" name="due" value="${iso()}"></label><label>우선순위<select name="priority"><option value="high">높음</option><option value="medium" selected>보통</option><option value="low">낮음</option></select></label><label class="full">메모<textarea name="note"></textarea></label></div><div class="actions"><button type="button" class="btn ghost" id="cancel">취소</button><button class="btn">추가</button></div></form></div>`);document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();document.querySelector('#form').onsubmit=async e=>{e.preventDefault();let f=new FormData(e.target),t={id:'t-'+Date.now(),title:f.get('title').trim(),requester:f.get('requester').trim(),channel:f.get('channel'),project:f.get('project').trim(),category:f.get('category').trim()||'기타',priority:f.get('priority'),due:f.get('due'),receivedAt:new Date().toISOString(),status:'todo',note:f.get('note').trim(),completedAt:null};await save(t);document.querySelector('#modal').remove();page='work';render()}}
-function bind(){document.querySelector('#brandHome')?.addEventListener('click',()=>{page='home';render()});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});document.querySelector('#logout')?.addEventListener('click',()=>signOut(auth));document.querySelector('#add')?.addEventListener('click',modal);document.querySelector('#search')?.addEventListener('input',e=>{search=e.target.value;if(page==='work')render()});document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});document.querySelectorAll('[data-done]').forEach(b=>b.onclick=async()=>{let t=tasks.find(x=>x.id===b.dataset.done);if(t){t={...t,status:t.status==='done'?'todo':'done',completedAt:t.status==='done'?null:new Date().toISOString()};await save(t)}});document.querySelectorAll('[data-status]').forEach(s=>s.onchange=async()=>{let t=tasks.find(x=>x.id===s.dataset.status);if(t)await save({...t,status:s.value,completedAt:s.value==='done'?new Date().toISOString():null})});document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>removeTask(b.dataset.delete))}
-function render(){if(!user){root.innerHTML=`<div class="auth"><div class="logo">Life<br>Tracker</div><div class="login"><small>PERSONAL OPERATING SYSTEM</small><h1>일과 삶을<br>한 곳에서.</h1><p>업무, 개인 할 일, 시간, 소비를 하나의 대시보드에서 기록하고 관리합니다.</p><button class="btn" id="login">Google로 계속하기</button></div></div>`;document.querySelector('#login').onclick=login;return}let c=page==='home'?home():page==='work'?work():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));root.innerHTML=`<div class="app">${side()}<main class="main">${top()}${c}</main></div>`;bind()}
+async function login(){await signInWithPopup(auth,new GoogleAuthProvider())}
+
+async function save(t){
+  await setDoc(doc(db,'users',user.uid,'tasks',t.id),{
+    title:t.title||'',requester:t.requester||'',channel:t.channel||'',project:t.project||'',
+    category:t.category||'기타',priority:t.priority||'medium',due:t.due||todayStr(),
+    receivedAt:t.receivedAt||new Date().toISOString(),status:t.status||'todo',
+    note:t.note||'',completedAt:t.completedAt||null,deletedAt:t.deletedAt||null
+  },{merge:true});
+}
+async function moveTrash(id){
+  const t=tasks.find(x=>x.id===id); if(!t)return;
+  if(confirm(`"${t.title}" 업무를 휴지통으로 이동할까요?`)){await save({...t,deletedAt:new Date().toISOString()});toast('휴지통으로 이동했습니다.')}
+}
+async function restoreTask(id){const t=tasks.find(x=>x.id===id);if(t){await save({...t,deletedAt:null});toast('업무를 복구했습니다.')}}
+async function hardDelete(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  if(confirm(`"${t.title}" 업무를 완전히 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)){await deleteDoc(doc(db,'users',user.uid,'tasks',id));toast('완전히 삭제했습니다.')}
+}
+
+function parseDueToken(token){
+  if(!token)return todayStr();
+  const t=token.trim();
+  const now=new Date();
+  if(t==='오늘')return todayStr();
+  if(t==='내일'){now.setDate(now.getDate()+1);return iso(now)}
+  if(t==='모레'){now.setDate(now.getDate()+2);return iso(now)}
+  const md=t.match(/^(\d{1,2})[./-](\d{1,2})$/);
+  if(md){const d=new Date(now.getFullYear(),Number(md[1])-1,Number(md[2]));return iso(d)}
+  const map={월:1,화:2,수:3,목:4,금:5,토:6,일:0};
+  const k=t.replace('요일','').slice(0,1);
+  if(map[k]!==undefined){
+    const cur=now.getDay(),target=map[k]; let diff=(target-cur+7)%7; if(diff===0)diff=7;
+    now.setDate(now.getDate()+diff);return iso(now);
+  }
+  return todayStr();
+}
+function parseQuick(text){
+  const p=text.split('/').map(x=>x.trim());
+  return {title:p[0]||'',due:parseDueToken(p[1]),requester:p[2]||'',channel:p[3]||''};
+}
+
+function side(){
+  return `<aside class="side">
+    <div class="brand" id="brandHome">Life Tracker</div>
+    <div class="nav">
+      ${[['work','Work'],['life','Life'],['time','Time'],['finance','Finance']].map(x=>`<button data-page="${x[0]}" class="${page===x[0]?'on':''}">${x[1]}</button>`).join('')}
+    </div>
+    <div class="me"><span>${esc(user?.email||'')}</span><button id="logout">로그아웃</button></div>
+  </aside>`;
+}
+function top(){
+  return `<div class="top">
+    <input id="search" class="search" placeholder="업무, 프로젝트, 요청자 검색..." value="${esc(search)}">
+    <span class="sync">● 동기화됨</span>
+  </div>`;
+}
+
+function home(){
+  const open=visibleOpen();
+  const today=open.filter(x=>x.due===todayStr());
+  const late=open.filter(x=>x.due&&dd(x.due)<0);
+  const doing=open.filter(x=>x.status==='doing');
+  const todayDone=activeTasks().filter(isTodayCompleted);
+  const priority=[...open].sort((a,b)=>{
+    const pa={high:0,medium:1,low:2}, av=pa[a.priority]??1,bv=pa[b.priority]??1;
+    if(av!==bv)return av-bv;
+    return (a.due||'9999').localeCompare(b.due||'9999');
+  }).slice(0,6);
+  return `<section>
+    <div class="hero">
+      <div><h1>${new Date().getHours()<12?'좋은 아침이에요':new Date().getHours()<18?'좋은 오후예요':'좋은 저녁이에요'}, Dale</h1><p>오늘 해야 할 것과 놓치면 안 되는 일을 먼저 봅니다.</p></div>
+      <button class="btn" id="quickAdd">＋ 빠른 추가</button>
+    </div>
+    <div class="metrics">
+      <div class="m y">오늘 마감<b>${today.length}</b></div>
+      <div class="m p">마감 지남<b>${late.length}</b></div>
+      <div class="m g">진행 중<b>${doing.length}</b></div>
+      <div class="m b">오늘 완료<b>${todayDone.length}</b></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>지금 볼 업무</h3>
+        ${priority.map(t=>`<div class="task">
+          <span class="check" data-done="${t.id}"></span>
+          <div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.project)}${t.requester?' · '+esc(t.requester):''}</small></div>
+          <span class="due ${t.due&&dd(t.due)<0?'late':''}">${dueLabel(t)}</span>
+        </div>`).join('')||'<p>남아 있는 업무가 없습니다.</p>'}
+      </div>
+      <div class="card"><h3>이번 주 신호</h3>
+        <p>이번 주 마감 <b>${open.filter(x=>inThisWeek(x.due)).length}</b></p>
+        <p>대기 중 <b>${open.filter(x=>x.status==='waiting').length}</b></p>
+        <p>이번 주 완료 <b>${activeTasks().filter(x=>x.status==='done'&&x.completedAt&&inThisWeek(iso(new Date(x.completedAt)))).length}</b></p>
+        <p style="color:#777;line-height:1.6">완료·마감 데이터가 쌓이면 지난주 대비 변화와 마감 준수율을 보여줍니다.</p>
+      </div>
+    </div>
+  </section>`;
+}
+
+function filtered(){
+  let list=tasks;
+  if(tab!=='trash')list=list.filter(t=>!t.deletedAt);
+  if(tab==='active')list=list.filter(t=>t.status!=='done');
+  if(tab==='today')list=list.filter(t=>t.status!=='done'&&t.due===todayStr());
+  if(tab==='week')list=list.filter(t=>t.status!=='done'&&inThisWeek(t.due));
+  if(tab==='overdue')list=list.filter(t=>t.status!=='done'&&t.due&&dd(t.due)<0);
+  if(tab==='waiting')list=list.filter(t=>t.status==='waiting');
+  if(tab==='done')list=list.filter(t=>t.status==='done');
+  if(tab==='trash')list=list.filter(t=>!!t.deletedAt);
+  const q=search.toLowerCase().trim();
+  if(q)list=list.filter(t=>[t.title,t.requester,t.project,t.channel,t.category].join(' ').toLowerCase().includes(q));
+  return list;
+}
+
+function work(){
+  const list=filtered(),trash=tab==='trash';
+  return `<section>
+    <div class="hero">
+      <div><h1>Work</h1><p>받은 업무를 빠르게 기록하고, 오늘·이번 주·지연 업무를 중심으로 관리합니다.</p></div>
+      <button class="btn" id="addTask">＋ 업무 추가</button>
+    </div>
+    <div class="tabs">
+      ${[['active','진행 업무'],['today','오늘'],['week','이번 주'],['overdue','지연'],['waiting','대기'],['done','완료'],['trash','휴지통']].map(x=>`<button data-tab="${x[0]}" class="${tab===x[0]?'on':''}">${x[1]}</button>`).join('')}
+    </div>
+    <div class="table">
+      <div class="row head"><div></div><div>업무</div><div>요청자</div><div>채널</div><div>프로젝트</div><div>마감</div><div>상태</div><div></div></div>
+      ${list.map(t=>trash?trashRow(t):workRow(t)).join('')||'<div class="empty">조건에 맞는 업무가 없습니다.</div>'}
+    </div>
+  </section>`;
+}
+function workRow(t){
+  return `<div class="row data">
+    <div class="check ${t.status==='done'?'done':''}" data-done="${t.id}">${t.status==='done'?'✓':''}</div>
+    <div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>
+    <div>${esc(t.requester)}</div><div>${esc(t.channel)}</div><div>${esc(t.project)}</div>
+    <div class="${t.due&&dd(t.due)<0&&t.status!=='done'?'late':''}">${dueLabel(t)}</div>
+    <div><select data-status="${t.id}" class="pill ${t.status}">
+      <option value="todo" ${t.status==='todo'?'selected':''}>할 일</option>
+      <option value="doing" ${t.status==='doing'?'selected':''}>진행 중</option>
+      <option value="waiting" ${t.status==='waiting'?'selected':''}>대기</option>
+      <option value="done" ${t.status==='done'?'selected':''}>완료</option>
+    </select></div>
+    <button class="linkbtn" data-trash="${t.id}">삭제</button>
+  </div>`;
+}
+function trashRow(t){
+  return `<div class="row data">
+    <div></div><div><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>
+    <div>${esc(t.requester)}</div><div>${esc(t.channel)}</div><div>${esc(t.project)}</div>
+    <div>${t.due||'-'}</div><div>휴지통</div>
+    <div class="trash-actions"><button class="linkbtn" data-restore="${t.id}">복구</button><button class="linkbtn" data-harddelete="${t.id}">삭제</button></div>
+  </div>`;
+}
+
+function placeholder(n){
+  const ko={Life:'개인 할 일과 습관을 관리하는 영역입니다.',Time:'시간 사용을 기록하고 주간 흐름을 보는 영역입니다.',Finance:'소비와 예산을 관리하는 영역입니다.'};
+  return `<div class="placeholder"><div class="card"><small>다음 구축 영역</small><h1 style="font-size:42px;margin:10px 0">${n}</h1><p>${ko[n]||'다음 단계에서 연결합니다.'}</p></div></div>`;
+}
+
+function taskModal(task=null,quick=false){
+  const editing=!!task;
+  const t=task||{title:'',due:todayStr(),requester:'',channel:'Slack',project:'',category:'기타',priority:'medium',note:'',status:'todo'};
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal">
+    <form class="sheet" id="taskForm">
+      <h2>${editing?'업무 수정':quick?'빠른 업무 추가':'업무 추가'}</h2>
+      ${quick&&!editing?`<label>한 줄 입력
+        <input id="quickInput" placeholder="예: GEO 리포트 수정 / 금요일 / 이승우 / Slack">
+        <div class="helper">업무명 / 마감 / 요청자 / 채널 순서로 입력하면 자동으로 채워집니다.</div>
+      </label>`:''}
+      <div class="quickline">
+        <label>업무명<input name="title" value="${esc(t.title)}" required autofocus></label>
+        <label>마감일<input type="date" name="due" value="${esc(t.due||todayStr())}"></label>
+      </div>
+      <details ${editing?'open':''}>
+        <summary>상세 설정 ${editing?'':'(선택)'}</summary>
+        <div class="form" style="margin-top:12px">
+          <label>요청자<input name="requester" value="${esc(t.requester)}"></label>
+          <label>요청 채널<select name="channel">
+            ${['Slack','Email','Meeting','Kakao','Call','Other'].map(v=>`<option ${t.channel===v?'selected':''}>${v}</option>`).join('')}
+          </select></label>
+          <label>프로젝트<input name="project" value="${esc(t.project)}"></label>
+          <label>업무 카테고리<input name="category" value="${esc(t.category||'기타')}"></label>
+          <label>우선순위<select name="priority">
+            <option value="high" ${t.priority==='high'?'selected':''}>높음</option>
+            <option value="medium" ${t.priority==='medium'?'selected':''}>보통</option>
+            <option value="low" ${t.priority==='low'?'selected':''}>낮음</option>
+          </select></label>
+          <label>상태<select name="status">
+            <option value="todo" ${t.status==='todo'?'selected':''}>할 일</option>
+            <option value="doing" ${t.status==='doing'?'selected':''}>진행 중</option>
+            <option value="waiting" ${t.status==='waiting'?'selected':''}>대기</option>
+            <option value="done" ${t.status==='done'?'selected':''}>완료</option>
+          </select></label>
+          <label class="full">메모<textarea name="note">${esc(t.note)}</textarea></label>
+        </div>
+      </details>
+      <div class="actions">
+        <div>${editing?'<button type="button" class="btn secondary" id="trashFromEdit">휴지통으로 이동</button>':''}</div>
+        <div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div>
+      </div>
+    </form>
+  </div>`);
+
+  const q=document.querySelector('#quickInput');
+  if(q)q.addEventListener('change',()=>{
+    const p=parseQuick(q.value),f=document.querySelector('#taskForm');
+    if(p.title)f.title.value=p.title;if(p.due)f.due.value=p.due;if(p.requester)f.requester.value=p.requester;if(p.channel)f.channel.value=p.channel;
+  });
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelector('#trashFromEdit')?.addEventListener('click',async()=>{await moveTrash(t.id);document.querySelector('#modal').remove()});
+  document.querySelector('#taskForm').onsubmit=async e=>{
+    e.preventDefault();const f=new FormData(e.target);
+    const status=f.get('status')||'todo';
+    const obj={
+      ...t,id:editing?t.id:'t-'+Date.now(),
+      title:String(f.get('title')||'').trim(),
+      due:f.get('due')||todayStr(),
+      requester:String(f.get('requester')||'').trim(),
+      channel:f.get('channel')||'Slack',
+      project:String(f.get('project')||'').trim(),
+      category:String(f.get('category')||'기타').trim()||'기타',
+      priority:f.get('priority')||'medium',
+      status,
+      note:String(f.get('note')||'').trim(),
+      receivedAt:editing?(t.receivedAt||new Date().toISOString()):new Date().toISOString(),
+      completedAt:status==='done'?(t.completedAt||new Date().toISOString()):null,
+      deletedAt:null
+    };
+    await save(obj);document.querySelector('#modal').remove();page='work';tab='active';render();
+  };
+}
+
+function bind(){
+  document.querySelector('#brandHome')?.addEventListener('click',()=>{page='home';render()});
+  document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});
+  document.querySelector('#logout')?.addEventListener('click',()=>signOut(auth));
+  document.querySelector('#quickAdd')?.addEventListener('click',()=>taskModal(null,true));
+  document.querySelector('#addTask')?.addEventListener('click',()=>taskModal());
+  document.querySelector('#search')?.addEventListener('input',e=>{search=e.target.value;if(page==='work')render()});
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
+  document.querySelectorAll('[data-done]').forEach(b=>b.onclick=async()=>{const t=tasks.find(x=>x.id===b.dataset.done);if(t){const next=t.status==='done'?'todo':'done';await save({...t,status:next,completedAt:next==='done'?new Date().toISOString():null})}});
+  document.querySelectorAll('[data-status]').forEach(s=>s.onchange=async()=>{const t=tasks.find(x=>x.id===s.dataset.status);if(t)await save({...t,status:s.value,completedAt:s.value==='done'?(t.completedAt||new Date().toISOString()):null})});
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const t=tasks.find(x=>x.id===b.dataset.edit);if(t)taskModal(t)});
+  document.querySelectorAll('[data-trash]').forEach(b=>b.onclick=()=>moveTrash(b.dataset.trash));
+  document.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>restoreTask(b.dataset.restore));
+  document.querySelectorAll('[data-harddelete]').forEach(b=>b.onclick=()=>hardDelete(b.dataset.harddelete));
+}
+function render(){
+  if(!user){
+    root.innerHTML=`<div class="auth"><div class="logo">Life Tracker</div><div class="login"><small>PERSONAL OPERATING SYSTEM</small><h1>일과 삶을<br>한 곳에서.</h1><p>업무, 개인 할 일, 시간, 소비를 하나의 대시보드에서 기록하고 관리합니다.</p><button class="btn" id="login">Google로 계속하기</button></div></div>`;
+    document.querySelector('#login').onclick=login;return;
+  }
+  const c=page==='home'?home():page==='work'?work():placeholder(page==='finance'?'Finance':page[0].toUpperCase()+page.slice(1));
+  root.innerHTML=`<div class="app">${side()}<main class="main">${top()}${c}</main></div>`;bind();
+}
 render();
-</script></body></html>
+</script>
+</body>
+</html>
