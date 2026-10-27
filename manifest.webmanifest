@@ -1,0 +1,18 @@
+{
+  "name": "Life Tracker",
+  "short_name": "Life Tracker",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101114",
+  "theme_color": "#101114",
+  "description": "Work, Life, Time, Finance를 한 곳에서 관리하는 개인 대시보드",
+  "icons": [
+    {
+      "src": "./life-tracker-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
