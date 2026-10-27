@@ -899,6 +899,45 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
 .drop-file{display:grid;place-items:center;min-height:150px;margin-top:14px;border:1px dashed #4a4d54;background:#181a1e;color:#bdb7ad;cursor:pointer}.drop-file input{margin-top:10px}
 .excluded-list{max-height:58vh;overflow:auto;margin-top:12px;border:1px solid #30333a}.excluded-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border-top:1px solid #2c2e34}.excluded-item:first-child{border-top:0}.excluded-item b{display:block;font-size:12px}.excluded-item small{display:block;color:#858179;margin-top:4px}
 @media(max-width:700px){.upload-mode-grid,.upload-file-grid{grid-template-columns:1fr}.upload-file-card.corporate{grid-column:auto}.finance-import-info{align-items:flex-start}}
+
+/* --- TIME QUICK ENTRY V14 --- */
+.quick-time-sheet{width:min(620px,94vw);padding:22px}
+.time-quick-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.time-quick-head small{display:block;color:#737982;font-size:9px;letter-spacing:.12em;margin-bottom:5px}
+.time-quick-head h2{margin:0!important;font-size:22px!important}
+.time-quick-head>span{font-size:10px;color:#7f848b;border:1px solid #31343a;padding:6px 8px;border-radius:999px;white-space:nowrap}
+.time-note-first{margin-top:0}
+.time-note-first label{font-size:12px;color:#b7b2a9;font-weight:650}
+.time-note-first textarea{min-height:92px!important;font-size:15px;line-height:1.55;background:#121316!important;border-color:#383b42!important}
+.time-note-first textarea:focus{outline:0;border-color:#788893!important;box-shadow:0 0 0 2px rgba(120,136,147,.13)}
+.time-category-block{margin-top:16px;padding-top:14px;border-top:1px solid #2c2f34}
+.time-category-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.time-category-head>label{font-size:11px;color:#99958d}
+.recent-cat{border:1px solid #3a3e44;background:#202329;color:#aeb4b8;border-radius:999px;padding:5px 9px;font-size:10px}
+.recent-cat:hover{background:#272b31}
+.slot-picker.compact{display:flex!important;flex-wrap:wrap;gap:7px!important}
+.slot-option.chip{width:auto!important;min-height:0!important;padding:8px 10px 8px 12px!important;border-radius:999px!important;background:#1b1d21!important;border:1px solid #34373d!important;display:inline-flex;align-items:center;gap:6px;position:relative;overflow:hidden}
+.slot-option.chip:before{width:3px!important}
+.slot-option.chip b{font-size:11px;white-space:nowrap}
+.slot-option.chip small{display:none!important}
+.slot-option.chip:hover{background:#23262b!important;border-color:color-mix(in srgb,var(--cat) 50%,#3a3d43)!important}
+.slot-option.chip.selected{outline:0!important;background:color-mix(in srgb,var(--cat) 18%,#202329)!important;border-color:color-mix(in srgb,var(--cat) 75%,#4a4d53)!important;color:#f0ece4}
+.time-optional{margin-top:16px;padding-top:13px;border-top:1px solid #2c2f34}
+.time-optional summary{display:flex;align-items:center;gap:7px;color:#a6a198;font-size:11px;cursor:pointer;list-style:none}
+.time-optional summary::-webkit-details-marker{display:none}
+.time-optional summary:after{content:'＋';margin-left:auto;color:#666c73}
+.time-optional[open] summary:after{content:'−'}
+.time-optional summary span{font-size:9px;color:#6f747a;border:1px solid #30343a;border-radius:999px;padding:2px 6px}
+.time-optional .time-link-select{margin-top:10px}
+.quick-time-sheet .actions{margin-top:18px}
+@media(max-width:620px){
+  .quick-time-sheet{padding:18px}
+  .time-quick-head{display:block}
+  .time-quick-head>span{display:inline-block;margin-top:8px}
+  .slot-picker.compact{gap:6px!important}
+  .slot-option.chip{padding:8px 9px 8px 11px!important}
+}
+
 </style>
 </head>
 <body>
@@ -1526,32 +1565,63 @@ function timeBlockModal(date,hour,selection=null){
   const one=cells.length===1;
   const existing=one?timeBlocks().find(b=>b.date===date&&b.hour===hour):null;
   const currentCat=existing?.category||'';
+  const recentKey=localStorage.getItem('lt_last_time_category')||'';
+  const recentCat=TIME_CATS.find(c=>c.key===recentKey);
   const links=timeLinkItems();
   const sorted=[...cells];
   const first=sorted[0],last=sorted[sorted.length-1];
   const rangeTitle=one?`${formatDateKo(date,true)} · ${String(hour).padStart(2,'0')}:00`:`${formatDateKo(first.date,true)} · ${String(first.hour).padStart(2,'0')}:00 ~ ${String((last.hour+1)%24).padStart(2,'0')}:00 · ${cells.length}시간`;
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet time-slot-sheet" id="timeBlockForm"><h2>${rangeTitle}</h2><div class="slot-picker">
-    ${TIME_CATS.map(c=>`<button type="button" class="slot-option ${currentCat===c.key?'selected':''}" style="--cat:${c.color}" data-slot-cat="${c.key}"><b>${esc(c.label)}</b><small>${esc(c.ko)}</small></button>`).join('')}
-  </div>
-  <input type="hidden" name="category" value="${esc(currentCat)}">
-  <div class="time-link-select"><label>연결할 Work / Life<select name="linkedRecord">
-    <option value="">연결 안 함</option>
-    ${links.map(x=>`<option value="${x.type}|${x.id}" ${existing?.linkedRecordId===x.id?'selected':''}>${x.type==='work'?'Work':'Life'} · ${esc(x.title)}</option>`).join('')}
-  </select></label></div>
-  <div class="slot-note"><label>무엇을 했나요?<textarea name="note" maxlength="160" placeholder="연결 항목을 선택하면 같은 내용을 다시 쓸 필요가 없습니다.">${esc(existing?.note||'')}</textarea></label></div>
-  <div class="helper">연결하면 Work/Life 항목에 실제 투입 시간이 자동 누적됩니다.</div>
-  <div class="actions"><div>${one&&existing?'<button type="button" class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet time-slot-sheet quick-time-sheet" id="timeBlockForm">
+    <div class="time-quick-head"><div><small>TIME BLOCK</small><h2>${rangeTitle}</h2></div><span>${cells.length}시간 기록</span></div>
+
+    <div class="slot-note time-note-first">
+      <label>무엇을 했나요?
+        <textarea name="note" maxlength="160" autofocus placeholder="예: 이동 / 제안서 수정 / 운동 / 유튜브">${esc(existing?.note||'')}</textarea>
+      </label>
+      <div class="helper">먼저 한 줄 쓰고, 아래에서 분류만 선택하면 됩니다. Ctrl/Cmd + Enter로 저장할 수 있어요.</div>
+    </div>
+
+    <div class="time-category-block">
+      <div class="time-category-head">
+        <label>카테고리</label>
+        ${!currentCat&&recentCat?`<button type="button" class="recent-cat" data-recent-cat="${recentCat.key}">최근 · ${esc(recentCat.label)}</button>`:''}
+      </div>
+      <div class="slot-picker compact">
+        ${TIME_CATS.map(c=>`<button type="button" class="slot-option chip ${currentCat===c.key?'selected':''}" style="--cat:${c.color}" data-slot-cat="${c.key}"><b>${esc(c.label)}</b><small>${esc(c.ko)}</small></button>`).join('')}
+      </div>
+      <input type="hidden" name="category" value="${esc(currentCat)}">
+    </div>
+
+    <details class="time-optional" ${existing?.linkedRecordId?'open':''}>
+      <summary>Work / Life 연결 <span>선택</span></summary>
+      <div class="time-link-select"><label>연결할 항목<select name="linkedRecord">
+        <option value="">연결 안 함</option>
+        ${links.map(x=>`<option value="${x.type}|${x.id}" ${existing?.linkedRecordId===x.id?'selected':''}>${x.type==='work'?'Work':'Life'} · ${esc(x.title)}</option>`).join('')}
+      </select></label></div>
+      <div class="helper">연결하면 해당 Work/Life 항목에 실제 투입 시간이 자동 누적됩니다.</div>
+    </details>
+
+    <div class="actions"><div>${one&&existing?'<button type="button" class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div>
+  </form></div>`);
   const form=document.querySelector('#timeBlockForm');
   const linkSelect=form.elements.linkedRecord;
+  const selectCategory=key=>{
+    form.category.value=key;
+    document.querySelectorAll('[data-slot-cat]').forEach(x=>x.classList.toggle('selected',x.dataset.slotCat===key));
+  };
+  requestAnimationFrame(()=>{form.elements.note?.focus();const n=form.elements.note;n?.setSelectionRange?.(n.value.length,n.value.length)});
   linkSelect?.addEventListener('change',()=>{if(linkSelect.value&&!form.elements.note.value){const [,id]=linkSelect.value.split('|');form.elements.note.value=linkedRecordLabel(id)}});
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
-  document.querySelectorAll('[data-slot-cat]').forEach(b=>b.onclick=()=>{form.category.value=b.dataset.slotCat;document.querySelectorAll('[data-slot-cat]').forEach(x=>x.classList.toggle('selected',x===b))});
+  document.querySelectorAll('[data-slot-cat]').forEach(b=>b.onclick=()=>selectCategory(b.dataset.slotCat));
+  document.querySelector('[data-recent-cat]')?.addEventListener('click',e=>selectCategory(e.currentTarget.dataset.recentCat));
+  form.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();form.requestSubmit()}});
   form.onsubmit=async e=>{
     e.preventDefault();const fd=new FormData(e.target),category=fd.get('category');if(!category){toast('카테고리를 선택하세요.');return}
     const note=String(fd.get('note')||'').trim();
     const link=String(fd.get('linkedRecord')||'');
     const [linkedRecordType,linkedRecordId]=link?link.split('|'):['',''];
     await Promise.all(cells.map(cell=>{const old=timeBlocks().find(b=>b.date===cell.date&&b.hour===cell.hour);return save({...(old||{}),id:old?.id||'tb-'+cell.date+'-'+cell.hour,recordType:'timeblock',date:cell.date,hour:cell.hour,category,note,linkedRecordId,linkedRecordType,receivedAt:old?.receivedAt||new Date().toISOString(),deletedAt:null})}));
+    localStorage.setItem('lt_last_time_category',category);
     document.querySelector('#modal').remove();render();
   };
   document.querySelector('#removeTimeBlock')?.addEventListener('click',async()=>{if(existing)await deleteDoc(doc(db,'users',user.uid,'tasks',existing.id));document.querySelector('#modal').remove();render()});
