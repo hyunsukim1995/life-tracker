@@ -938,6 +938,50 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
   .slot-option.chip{padding:8px 9px 8px 11px!important}
 }
 
+
+/* --- TIME MODAL STICKY ACTIONS V15 --- */
+.time-slot-sheet{
+  max-height:calc(100dvh - 32px)!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.time-slot-sheet .actions{
+  position:sticky!important;
+  bottom:-1px;
+  z-index:12;
+  margin:18px -22px -22px!important;
+  padding:14px 22px calc(14px + env(safe-area-inset-bottom))!important;
+  background:linear-gradient(180deg,rgba(24,25,29,.94),#18191d 32%)!important;
+  border-top:1px solid #34373d;
+  box-shadow:0 -14px 30px rgba(0,0,0,.28);
+  backdrop-filter:blur(8px);
+}
+.time-slot-sheet .actions-right{
+  margin-left:auto;
+}
+@media(max-width:620px){
+  .modal{padding:8px!important;align-items:center}
+  .time-slot-sheet{
+    width:min(100%,620px)!important;
+    max-height:calc(100dvh - 16px)!important;
+    border-radius:16px!important;
+    padding:18px!important;
+  }
+  .time-slot-sheet .actions{
+    margin:16px -18px -18px!important;
+    padding:12px 18px calc(12px + env(safe-area-inset-bottom))!important;
+  }
+  .time-slot-sheet .actions .btn{
+    min-height:46px;
+  }
+}
+@media(min-width:621px) and (max-width:1180px){
+  .time-slot-sheet{
+    max-height:calc(100dvh - 28px)!important;
+  }
+}
+
 </style>
 </head>
 <body>
