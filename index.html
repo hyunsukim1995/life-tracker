@@ -571,6 +571,50 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
   .nav .doodle-mark{width:25px!important;height:25px!important}
 }
 
+
+/* --- LIFE ACTIONS + FINANCE CALENDAR V9 --- */
+.section-head{justify-content:flex-start}
+.section-head .section-action{margin-left:auto}
+.section-action{border:1px solid #3a3d44;background:#202228;color:#d9d3c9;border-radius:7px;padding:7px 10px;font-size:11px;min-height:34px}
+.section-action.primary{background:#e9e2d4;color:#171719;border-color:#e9e2d4;font-weight:700}
+.life-hero-actions{display:flex;align-items:center;gap:8px}
+.finance-periods{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.finance-period{background:#1b1d21;border:1px solid #30333a;padding:13px}
+.finance-period small{display:block;color:#858079;font-size:10px;margin-bottom:7px}
+.finance-period b{display:block;font-size:22px}
+.finance-calendar{margin-top:16px;background:#17191d;border:1px solid #30333a;padding:16px}
+.finance-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.finance-calendar-head h3{margin:0;font-size:18px}
+.finance-calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.finance-cal-week{font-size:10px;color:#77736c;text-align:center;padding:5px 0}
+.finance-cal-day{min-height:92px;background:#1d1f24;border:1px solid #2d3036;padding:7px;text-align:left;color:#bbb6ad;position:relative}
+.finance-cal-day:hover{background:#23262b}
+.finance-cal-day.out{opacity:.25}
+.finance-cal-day.selected{outline:1px solid #8297a7;background:#222a30}
+.finance-cal-day.today{box-shadow:inset 0 0 0 1px #596b78}
+.finance-cal-num{font-size:13px;margin-bottom:8px}
+.finance-cal-money{font-size:9px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.finance-cal-money.income{color:#6e9ed4}
+.finance-cal-money.expense{color:#c87983}
+.finance-list-filter{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.finance-list-filter b{font-size:12px}
+@media(max-width:1000px){.finance-periods{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){
+  .life-hero-actions{width:auto}
+  .page-life .hero{align-items:flex-start}
+  .page-life .hero>div:first-child{min-width:0}
+  .section-action{padding:7px 9px;min-height:36px;font-size:10px}
+  .finance-periods{grid-template-columns:1fr 1fr}
+  .finance-period{padding:11px}
+  .finance-period b{font-size:19px}
+  .finance-calendar{padding:10px;margin-left:-2px;margin-right:-2px}
+  .finance-calendar-grid{gap:2px}
+  .finance-cal-day{min-height:76px;padding:5px 3px}
+  .finance-cal-num{font-size:12px;margin-bottom:5px}
+  .finance-cal-money{font-size:7px;letter-spacing:-.03em}
+  .finance-calendar-head h3{font-size:16px}
+}
+
 </style>
 </head>
 <body>
@@ -592,7 +636,7 @@ const cfg={
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 setPersistence(auth,browserLocalPersistence);
 
-let user=null,tasks=[],page='home',tab='active',search='',unsub=null,sideCollapsed=localStorage.getItem('lt_sidebar')==='collapsed',financeMonth=null;
+let user=null,tasks=[],page='home',tab='active',search='',unsub=null,sideCollapsed=localStorage.getItem('lt_sidebar')==='collapsed',financeMonth=null,financeSelectedDate=null;
 const root=document.querySelector('#root');
 
 const iso=(d=new Date())=>new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -915,15 +959,10 @@ function life(){
   const habitTarget=hs.reduce((sum,h)=>sum+(h.repeatDays||[1,1,1,1,1,1,1]).filter(Boolean).length,0);
   const habitRate=habitTarget?Math.min(100,Math.round(habitDone/habitTarget*100)):0;
   const ordered=[...todos].filter(t=>t.status!=='done').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
-  return `<section>
+  return `<section class="page-life">
     <div class="hero">
       <div><h1>Life</h1><p>개인 할 일, 반복 습관, 목표를 한 화면에서 관리합니다.</p></div>
-      <div class="life-top-actions">
-        <button class="btn secondary" id="lifeTrash">휴지통</button>
-        <button class="btn secondary" id="addGoal">＋ Goal</button>
-        <button class="btn secondary" id="addHabit">＋ Habit</button>
-        <button class="btn" id="addPersonal">＋ 개인 할 일</button>
-      </div>
+      <div class="life-hero-actions"><button class="btn secondary" id="lifeTrash">휴지통</button></div>
     </div>
     <div class="metrics">
       <div class="m y">오늘 할 일<b>${today.length}</b></div>
@@ -933,19 +972,19 @@ function life(){
     </div>
     <div class="life-grid" style="margin-top:14px">
       <div class="card life-zone">
-        <div class="section-head">${doodleIcon('life')}<h3>개인 할 일</h3></div>
+        <div class="section-head">${doodleIcon('life')}<h3>개인 할 일</h3><button class="section-action primary" id="addPersonal">＋ 할 일</button></div>
         ${ordered.slice(0,12).map(personalRow).join('')||'<p>남아 있는 개인 할 일이 없습니다.</p>'}
         ${doneToday.length?'<div class="helper">오늘 완료 '+doneToday.length+'개</div>':''}
       </div>
       <div class="card habit-zone">
-        <div class="section-head">${doodleIcon('star')}<h3>이번 주 Habit</h3></div>
+        <div class="section-head">${doodleIcon('star')}<h3>이번 주 Habit</h3><button class="section-action" id="addHabit">＋ Habit</button></div>
         <div class="habit-row">
           <div></div>${dates.map(d=>`<div class="habit-head">${weekdayLabel(d)}</div>`).join('')}<div class="habit-head">주간</div><div></div>
         </div>
         ${hs.map(h=>habitRow(h,dates)).join('')||'<p>등록된 Habit이 없습니다.</p>'}
       </div>
       <div class="card life-wide goal-zone">
-        <div class="section-head">${doodleIcon('scribble')}<h3>Goal</h3></div>
+        <div class="section-head">${doodleIcon('scribble')}<h3>Goal</h3><button class="section-action" id="addGoal">＋ Goal</button></div>
         <div class="goal-grid">${gs.map(goalCard).join('')||'<p>등록된 Goal이 없습니다.</p>'}</div>
       </div>
     </div>
@@ -1215,12 +1254,36 @@ const FIN_INCOME_CATS=[
 function finCat(key){return FIN_CATS.find(x=>x.key===key)||FIN_INCOME_CATS.find(x=>x.key===key)||FIN_CATS[FIN_CATS.length-1]}
 function financeCategoryOptions(type,selected){const list=type==='income'?FIN_INCOME_CATS:FIN_CATS;return list.map(c=>`<option value="${c.key}" ${selected===c.key?'selected':''}>${c.label}</option>`).join('')}
 function monthShift(month,delta){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+delta,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function financeSundayWeekRange(dateStr=todayStr()){
+  const d=new Date(dateStr+'T00:00:00'),start=new Date(d);start.setDate(d.getDate()-d.getDay());
+  const end=new Date(start);end.setDate(start.getDate()+6);
+  return [iso(start),iso(end)];
+}
+function financeCalendarCells(month,entries){
+  const [y,m]=month.split('-').map(Number),first=new Date(y,m-1,1),start=first.getDay(),last=new Date(y,m,0).getDate(),prevLast=new Date(y,m-1,0).getDate();
+  const byDate={};
+  entries.forEach(x=>{
+    byDate[x.date] ||= {income:0,expense:0};
+    byDate[x.date][x.type]=(byDate[x.date][x.type]||0)+Number(x.amount||0);
+  });
+  const out=[];
+  for(let i=0;i<42;i++){
+    let day,cy=y,cm=m-1,outside=false;
+    if(i<start){day=prevLast-start+i+1;cm=m-2;outside=true;if(cm<0){cm=11;cy--}}
+    else if(i>=start+last){day=i-start-last+1;cm=m;outside=true;if(cm>11){cm=0;cy++}}
+    else day=i-start+1;
+    const date=cy+'-'+String(cm+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    out.push({day,date,outside,...(byDate[date]||{income:0,expense:0})});
+  }
+  return out;
+}
 function financePage(){
   setTimeout(()=>ensureRecurringForMonth(financeMonth),0);
-  const entries=financeEntries().filter(x=>String(x.date||'').startsWith(financeMonth)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.receivedAt||'').localeCompare(a.receivedAt||''));
+  const allMonth=financeEntries().filter(x=>String(x.date||'').startsWith(financeMonth)).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.receivedAt||'').localeCompare(a.receivedAt||''));
+  const entries=financeSelectedDate?allMonth.filter(x=>x.date===financeSelectedDate):allMonth;
   const prevMonth=monthShift(financeMonth,-1);
   const prevEntries=financeEntries().filter(x=>String(x.date||'').startsWith(prevMonth));
-  const expenses=entries.filter(x=>x.type==='expense'),incomes=entries.filter(x=>x.type==='income');
+  const expenses=allMonth.filter(x=>x.type==='expense'),incomes=allMonth.filter(x=>x.type==='income');
   const prevExpenses=prevEntries.filter(x=>x.type==='expense');
   const expense=expenses.reduce((a,b)=>a+Number(b.amount||0),0),income=incomes.reduce((a,b)=>a+Number(b.amount||0),0);
   const prevExpense=prevExpenses.reduce((a,b)=>a+Number(b.amount||0),0);
@@ -1231,9 +1294,33 @@ function financePage(){
   const fixed=expenses.filter(x=>x.nature==='fixed').reduce((a,b)=>a+Number(b.amount||0),0);
   const fixedRatio=expense?Math.round(fixed/expense*100):0;
   const savingRate=income?Math.round((income-expense)/income*100):null;
+  const todayExpense=financeEntries().filter(x=>x.type==='expense'&&x.date===todayStr()).reduce((a,b)=>a+Number(b.amount||0),0);
+  const [weekStart,weekEnd]=financeSundayWeekRange();
+  const weekExpense=financeEntries().filter(x=>x.type==='expense'&&x.date>=weekStart&&x.date<=weekEnd).reduce((a,b)=>a+Number(b.amount||0),0);
+  const cal=financeCalendarCells(financeMonth,allMonth);
   return `<section class="page-finance">
-    <div class="hero"><div><h1>Finance</h1><p>이번 달 소비와 수입을 기록하고, 예산과 전월 변화를 함께 봅니다.</p></div><div class="life-top-actions"><button class="btn secondary" id="setBudget">예산 설정</button><button class="btn" id="addFinance">＋ 내역 추가</button></div></div>
+    <div class="hero"><div><h1>Finance</h1><p>이번 달 소비와 수입을 기록하고, 오늘·이번 주·이번 달 흐름을 함께 봅니다.</p></div><div class="life-top-actions"><button class="btn secondary" id="setBudget">예산 설정</button><button class="btn" id="addFinance">＋ 내역 추가</button></div></div>
     <div class="finance-month-nav"><button id="prevFinanceMonth">‹</button><div class="finance-month-label">${financeMonth.replace('-','.')}.</div><button id="nextFinanceMonth">›</button></div>
+
+    <div class="finance-periods">
+      <div class="finance-period"><small>오늘 지출</small><b>${money(todayExpense)}</b></div>
+      <div class="finance-period"><small>이번 주 지출</small><b>${money(weekExpense)}</b></div>
+      <div class="finance-period"><small>이번 달 지출</small><b>${money(expense)}</b></div>
+      <div class="finance-period"><small>이번 달 수입</small><b>${money(income)}</b></div>
+    </div>
+
+    <div class="finance-calendar">
+      <div class="finance-calendar-head"><h3>${financeMonth.replace('-','.')} 월간</h3><div class="helper">날짜를 누르면 그날 내역만 봅니다.</div></div>
+      <div class="finance-calendar-grid">
+        ${['일','월','화','수','목','금','토'].map(x=>`<div class="finance-cal-week">${x}</div>`).join('')}
+        ${cal.map(c=>`<button class="finance-cal-day ${c.outside?'out':''} ${c.date===todayStr()?'today':''} ${financeSelectedDate===c.date?'selected':''}" data-fin-date="${c.date}">
+          <div class="finance-cal-num">${c.day}</div>
+          ${c.income?`<div class="finance-cal-money income">+${money(c.income).replace('원','')}</div>`:''}
+          ${c.expense?`<div class="finance-cal-money expense">-${money(c.expense).replace('원','')}</div>`:''}
+        </button>`).join('')}
+      </div>
+    </div>
+
     <div class="metrics" style="margin-top:14px">
       <div class="m" style="background:linear-gradient(145deg,#2d2528,#242024)!important"><span>이번 달 지출</span><b>${money(expense)}</b></div>
       <div class="m" style="background:linear-gradient(145deg,#24302b,#1e2723)!important"><span>이번 달 수입</span><b>${money(income)}</b></div>
@@ -1249,8 +1336,9 @@ function financePage(){
     <div class="finance-grid">
       <div class="card">
         <div class="section-head">${doodleIcon('finance')}<h3>이번 달 내역</h3></div>
-        ${budgetAmount?`<div class="finance-budget-card"><div class="finance-budget-line"><div><small>월 예산</small><b>${money(budgetAmount)}</b></div><div style="text-align:right"><small>사용</small><b>${Math.min(999,Math.round(expense/budgetAmount*100))}%</b></div></div><div class="finance-budget-bar"><i style="width:${Math.min(100,expense/budgetAmount*100)}%"></i></div></div>`:''}
-        <div class="finance-list">${entries.slice(0,30).map(x=>`<div class="finance-entry" data-finance-edit="${x.id}"><div class="date">${formatDateKo(x.date)}</div><div><b>${esc(x.memo||finCat(x.category).label)}${x.recurring||x.recurringInstance?'<span class="recurring-badge">매월</span>':''}</b><small>${esc(finCat(x.category).label)} · ${esc(x.nature==='fixed'?'고정':'변동')} · ${esc(x.method||'')}</small></div><div class="amount ${x.type}">${x.type==='expense'?'-':'+'}${money(x.amount)}</div></div>`).join('')||'<div class="empty">이번 달 기록이 없습니다.</div>'}</div>
+        <div class="finance-list-filter"><b>${financeSelectedDate?formatDateKo(financeSelectedDate,true)+' 내역':'월 전체 내역'}</b>${financeSelectedDate?'<button class="section-action" id="clearFinanceDate">전체 보기</button>':''}</div>
+        ${budgetAmount&&!financeSelectedDate?`<div class="finance-budget-card"><div class="finance-budget-line"><div><small>월 예산</small><b>${money(budgetAmount)}</b></div><div style="text-align:right"><small>사용</small><b>${Math.min(999,Math.round(expense/budgetAmount*100))}%</b></div></div><div class="finance-budget-bar"><i style="width:${Math.min(100,expense/budgetAmount*100)}%"></i></div></div>`:''}
+        <div class="finance-list">${entries.slice(0,30).map(x=>`<div class="finance-entry" data-finance-edit="${x.id}"><div class="date">${formatDateKo(x.date)}</div><div><b>${esc(x.memo||finCat(x.category).label)}${x.recurring||x.recurringInstance?'<span class="recurring-badge">매월</span>':''}</b><small>${esc(finCat(x.category).label)} · ${esc(x.nature==='fixed'?'고정':'변동')} · ${esc(x.method||'')}</small></div><div class="amount ${x.type}">${x.type==='expense'?'-':'+'}${money(x.amount)}</div></div>`).join('')||'<div class="empty">해당 기간 기록이 없습니다.</div>'}</div>
       </div>
       <div class="card">
         <div class="section-head">${doodleIcon('scribble')}<h3>지출 카테고리</h3></div>
@@ -1411,9 +1499,11 @@ function bind(){
   document.querySelector('#editWeekGoal')?.addEventListener('click',weekGoalModal);
   document.querySelector('#addFinance')?.addEventListener('click',()=>financeModal());
   document.querySelector('#setBudget')?.addEventListener('click',budgetModal);
-  document.querySelector('#prevFinanceMonth')?.addEventListener('click',()=>{financeMonth=monthShift(financeMonth,-1);render()});
-  document.querySelector('#nextFinanceMonth')?.addEventListener('click',()=>{financeMonth=monthShift(financeMonth,1);render()});
+  document.querySelector('#prevFinanceMonth')?.addEventListener('click',()=>{financeMonth=monthShift(financeMonth,-1);financeSelectedDate=null;render()});
+  document.querySelector('#nextFinanceMonth')?.addEventListener('click',()=>{financeMonth=monthShift(financeMonth,1);financeSelectedDate=null;render()});
   document.querySelectorAll('[data-finance-edit]').forEach(b=>b.onclick=()=>{const x=financeEntries().find(v=>v.id===b.dataset.financeEdit);if(x)financeModal(x)});
+  document.querySelectorAll('[data-fin-date]').forEach(b=>b.onclick=()=>{financeSelectedDate=b.dataset.finDate;const m=financeSelectedDate.slice(0,7);if(m!==financeMonth)financeMonth=m;render()});
+  document.querySelector('#clearFinanceDate')?.addEventListener('click',()=>{financeSelectedDate=null;render()});
   document.querySelector('#clearWeekTime')?.addEventListener('click',async()=>{if(!confirm('이번 주 시간 기록을 전부 비울까요?'))return;const dates=weekDates();const list=timeBlocks().filter(b=>dates.includes(b.date));for(const x of list)await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));render()});
 }
 function render(){
