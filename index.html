@@ -1030,6 +1030,7 @@ const TIME_CATS=[
   {key:'career',label:'For career',ko:'커리어를 위해',color:'#4f7191'},
   {key:'joy',label:'For joy',ko:'행복을 위해',color:'#9a7a45'},
   {key:'sleep',label:'Sleep',ko:'수면',color:'#505b74'},
+  {key:'waste',label:'Waste',ko:'낭비',color:'#775d5f'},
   {key:'other',label:'Other',ko:'기타',color:'#707277'}
 ];
 function timeCat(key){return TIME_CATS.find(x=>x.key===key)||TIME_CATS[TIME_CATS.length-1]}
@@ -1207,19 +1208,6 @@ function home(){
       </div>
     </div>
 
-    <div class="home-duo">
-      <div class="card habit-zone">
-        <div class="section-head">${doodleIcon('star')}<h3>이번 주 Habit</h3></div>
-        ${hs.slice(0,5).map(h=>{const st=habitWeekStats(h,dates);return `<div class="kv"><span>${esc(h.title)}</span><span class="area">${st.target?st.done+'/'+st.target:'예정 없음'}</span></div>`}).join('')||'<p class="empty">Habit이 없습니다.</p>'}
-      </div>
-      <div class="card status-zone">
-        <div class="section-head">${doodleIcon('scribble')}<h3>이번 주 상태</h3></div>
-        <div class="kv"><span>지연 Work</span><b class="${late.length?'warn-text':''}">${late.length}개</b></div>
-        <div class="kv"><span>오늘 미완료 Life</span><b class="${personalToday.length?'warn-text':''}">${personalToday.length}개</b></div>
-        <div class="kv"><span>현재까지 미체크 Habit</span><b class="${habitMissing?'warn-text':''}">${habitMissing}회</b></div>
-        <div class="helper">${late.length||personalToday.length||habitMissing?'확인이 필요한 항목이 있습니다.':'현재까지 특이사항이 없습니다.'}</div>
-      </div>
-    </div>
   </section>`;
 }
 function filtered(){
