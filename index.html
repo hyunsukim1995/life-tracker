@@ -754,6 +754,59 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
   .finance-cal-day{min-height:76px}
 }
 
+
+/* --- CONNECTED OS + WEEKLY REVIEW V11 --- */
+.hero-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.page-section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:20px 0 9px}
+.page-section-title h2{margin:0;font-size:14px;letter-spacing:.01em;color:#d6d0c6}
+.page-section-title small{font-size:10px;color:#77736c}
+.time-link{display:block;margin-top:3px;color:#7f98aa!important;font-size:9px!important}
+.time-hours{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 6px;border:1px solid #3b4650;background:#202a31;color:#9fb0bc;border-radius:4px;font-size:9px;font-weight:600;white-space:nowrap}
+.time-link-select{margin-top:14px}
+.time-link-select label{font-size:11px;color:#9b968d}
+.time-link-select select{width:100%;min-height:44px;margin-top:6px;border:1px solid #34363d;background:#111216;color:#f0ece4;padding:10px 11px;border-radius:7px}
+.review-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.review-metric{background:#1c1e23;border:1px solid #30333a;padding:15px;min-height:110px}
+.review-metric small{display:block;font-size:10px;color:#858079;margin-bottom:8px}
+.review-metric b{display:block;font-size:27px}
+.review-metric span{display:block;font-size:10px;color:#8f8a82;margin-top:5px}
+.review-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+.review-goal{padding:16px;background:linear-gradient(145deg,#27313a,#20272e);border:1px solid #36434d}
+.review-goal-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.review-goal-check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;color:#b8b2a9}
+.review-goal-check input{width:19px;height:19px}
+.review-note textarea{width:100%;min-height:110px;margin-top:7px;background:#111216;border:1px solid #34363d;color:#f0ece4;padding:12px;border-radius:7px;resize:vertical}
+.review-list{display:grid;gap:0}
+.review-line{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-top:1px solid #2d2f35}
+.review-line:first-child{border-top:0}
+.review-line span{font-size:11px;color:#9d988f}
+.review-line b{font-size:12px;text-align:right}
+.home-review-cta{background:linear-gradient(145deg,#242d35,#1d242a);border:1px solid #35414b;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.home-review-cta small{display:block;color:#84919a;font-size:10px;margin-bottom:4px}
+.home-review-cta b{font-size:13px}
+.quick-add-choice.four{grid-template-columns:1fr 1fr}
+.quick-add-option.time-q{background:#202a32}
+.quick-add-option.finance-q{background:#262923}
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.summary-cell{padding:12px;background:#1b1d21;border:1px solid #30333a}
+.summary-cell small{display:block;font-size:9px;color:#817d76;margin-bottom:6px}
+.summary-cell b{font-size:19px}
+@media(max-width:1000px){
+  .review-grid{grid-template-columns:1fr 1fr}
+  .review-layout{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .hero-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .hero-actions .btn{width:100%;padding-left:8px;padding-right:8px;font-size:12px}
+  .review-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .review-metric{padding:12px;min-height:92px}
+  .review-metric b{font-size:22px}
+  .review-layout{grid-template-columns:1fr}
+  .quick-add-choice.four{grid-template-columns:1fr 1fr}
+  .quick-add-option{min-height:104px}
+  .summary-strip{grid-template-columns:1fr 1fr}
+}
+
 </style>
 </head>
 <body>
@@ -824,6 +877,26 @@ function habits(){return tasks.filter(t=>t.recordType==='habit')}
 function goals(){return tasks.filter(t=>t.recordType==='goal')}
 function liveLife(type){return tasks.filter(t=>t.recordType===type&&!t.deletedAt)}
 function timeBlocks(){return tasks.filter(t=>t.recordType==='timeblock'&&!t.deletedAt)}
+function linkedTimeHours(id,dates=null){
+  return timeBlocks().filter(b=>b.linkedRecordId===id&&(!dates||dates.includes(b.date))).length;
+}
+function timeLinkItems(){
+  const works=tasks.filter(t=>t.recordType==='work'&&!t.deletedAt&&t.status!=='done').map(t=>({id:t.id,type:'work',title:t.title,due:t.due||''}));
+  const lives=lifeTodos().filter(t=>!t.deletedAt&&t.status!=='done').map(t=>({id:t.id,type:'personal',title:t.title,due:t.due||''}));
+  return [...works,...lives].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+}
+function linkedRecordLabel(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return '';
+  return t.title||'';
+}
+function weeklyReviews(){return tasks.filter(t=>t.recordType==='weeklyreview'&&!t.deletedAt)}
+function currentWeeklyReview(){return weeklyReviews().find(x=>x.weekStart===iso(startOfWeek()))}
+function weekRange(offset=0){
+  const start=startOfWeek(); start.setDate(start.getDate()+offset*7);
+  const arr=[]; for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push(iso(d))}
+  return arr;
+}
 function weekGoals(){return tasks.filter(t=>t.recordType==='weekgoal'&&!t.deletedAt)}
 function currentWeekGoal(){return weekGoals().find(x=>x.weekStart===iso(startOfWeek()))}
 function financeEntries(){return tasks.filter(t=>t.recordType==='financeentry'&&!t.deletedAt)}
@@ -990,15 +1063,9 @@ function home(){
   return `<section>
     <div class="hero">
       <div><h1>Work & Life</h1><p>업무와 개인 생활을 따로 보지 않고, 오늘 놓치면 안 되는 것부터 한 화면에서 봅니다.</p></div>
-      <button class="btn" id="quickAdd">＋ 빠른 추가</button>
+      <div class="hero-actions"><button class="btn secondary" id="openWeeklyReview">Weekly Review</button><button class="btn" id="quickAdd">＋ 빠른 추가</button></div>
     </div>
-    <div class="metrics">
-      <div class="m work-metric"><div class="section-head">${doodleIcon('work')}<span>오늘 마감 업무</span></div><b>${workToday.length}</b></div>
-      <div class="m work-metric"><div class="section-head">${doodleIcon('scribble')}<span>지연 업무</span></div><b>${late.length}</b></div>
-      <div class="m life-metric"><div class="section-head">${doodleIcon('life')}<span>오늘 Life 할 일</span></div><b>${personalToday.length}</b></div>
-      <div class="m life-metric"><div class="section-head">${doodleIcon('star')}<span>이번 주 Habit</span></div><b>${scheduled?Math.round(checked/scheduled*100):0}%</b></div>
-    </div>
-
+    <div class="page-section-title"><h2>Today</h2><small>오늘 행동 중심</small></div>
     <div class="today-board">
       <div class="today-card"><small>TODAY · WORK</small><h4>오늘 Work</h4><div class="today-mini-list">${workToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 마감 업무 없음</span>'}</div></div>
       <div class="today-card"><small>TODAY · LIFE</small><h4>오늘 Life</h4><div class="today-mini-list">${personalToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 할 일 없음</span>'}</div></div>
@@ -1006,6 +1073,8 @@ function home(){
       <div class="today-card"><small>TODAY · TIME</small><h4>오늘 Time</h4><div class="today-big">${todayTime.length}h</div><div class="today-mini-list"><span>24시간 중 ${Math.round(todayTime.length/24*100)}% 기록</span></div></div>
     </div>
 
+    <div class="home-review-cta"><div><small>WEEKLY REVIEW</small><b>Work · Life · Time · Finance를 한 번에 돌아보기</b></div><button class="section-action" id="openWeeklyReview2">이번 주 보기</button></div>
+    <div class="page-section-title"><h2>To do</h2><small>마감과 우선순위</small></div>
     <div class="home-duo">
       <div class="card work-zone">
         <div class="section-head">${doodleIcon('work')}<h3>Work_To do</h3></div>
@@ -1062,9 +1131,10 @@ function work(){
   </section>`;
 }
 function workRow(t){
+  const hours=linkedTimeHours(t.id);
   return `<div class="row data">
     <div class="check ${t.status==='done'?'done':''}" data-done="${t.id}">${t.status==='done'?'✓':''}</div>
-    <div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>
+    <div class="row-title" data-edit="${t.id}"><b>${esc(t.title)}${hours?`<span class="time-hours">투입 ${hours}h</span>`:''}</b><small>${esc(t.category)}</small></div>
     <div>${esc(t.requester)}</div><div>${esc(t.channel)}</div><div>${esc(t.project)}</div>
     <div class="${t.due&&dd(t.due)<0&&t.status!=='done'?'late':''}">${formatDateKo(t.due)}<span class="date-inline">${dueLabel(t)}</span></div>
     <div><select data-status="${t.id}" class="pill ${t.status}">
@@ -1132,12 +1202,13 @@ function life(){
 function personalRow(t){
   const g=goals().find(x=>x.id===t.goalId);
   const h=habits().find(x=>x.id===t.habitId);
+  const hours=linkedTimeHours(t.id);
   return `<div class="life-item">
     <div class="check ${t.status==='done'?'done':''}" data-personal-done="${t.id}">${t.status==='done'?'✓':''}</div>
-    <div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.area||'Other · 기타')}</small>
+    <div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}${hours?`<span class="time-hours">투입 ${hours}h</span>`:''}</b><small>${esc(t.area||'Other · 기타')}</small>
       ${g||h?`<div class="parent-path">${g?'<b>'+esc(g.title)+'</b>':''}${g&&h?' → ':''}${h?esc(h.title):''} → Todo</div>`:''}
     </div>
-    <span class="due ${t.due&&dd(t.due)<0?'late':''}">${dueLabel(t)}</span>
+    <span class="due ${t.due&&dd(t.due)<0?'late':''}">${formatDateKo(t.due)}<span class="date-inline">${dueLabel(t)}</span></span>
   </div>`;
 }
 function habitRow(h,dates){
@@ -1286,6 +1357,7 @@ function timePage(){
   const totals={};TIME_CATS.forEach(c=>totals[c.key]=0);
   blocks.filter(b=>dates.includes(b.date)).forEach(b=>{totals[b.category]=(totals[b.category]||0)+1});
   const total=Object.values(totals).reduce((a,b)=>a+b,0);
+  const linkedTotal=blocks.filter(b=>dates.includes(b.date)&&b.linkedRecordId).length;
   const wg=currentWeekGoal();
   return `<section class="page-time">
     <div class="hero">
@@ -1321,7 +1393,8 @@ function timePage(){
         <div class="section-head">${doodleIcon('star')}<h3>Weekly summary</h3></div>
         <div class="kv"><span>기록한 시간</span><b>${total}h</b></div>
         <div class="kv"><span>168시간 기록률</span><b>${Math.round(total/168*100)}%</b></div>
-        <div class="kv"><span>가장 많이 쓴 영역</span><b>${(()=>{const top=TIME_CATS.slice().sort((a,b)=>(totals[b.key]||0)-(totals[a.key]||0))[0];return totals[top.key]?top.label:'-'})()}</b></div>
+        <div class="kv"><span>업무/할 일 연결 시간</span><b>${linkedTotal}h</b></div>
+        <div class="kv"><span>가장 많이 쓴 영역</span><b>${(()=>{const top=TIME_CATS.slice().sort((a,b)=>(totals[b.key]||0)-(totals[a.key]||0))[0];return totals[top.key]?top.label.replace(/^For\\s+/,''):'-'})()}</b></div>
         <div class="time-legend">${TIME_CATS.map(c=>`<span class="area"><i class="time-dot" style="--dot:${c.color}"></i>${c.label}</span>`).join('')}</div>
       </div>
     </div>
@@ -1339,19 +1412,32 @@ function timeBlockModal(date,hour,selection=null){
   const one=cells.length===1;
   const existing=one?timeBlocks().find(b=>b.date===date&&b.hour===hour):null;
   const currentCat=existing?.category||'';
+  const links=timeLinkItems();
   const sorted=[...cells];
   const first=sorted[0],last=sorted[sorted.length-1];
   const rangeTitle=one?`${formatDateKo(date,true)} · ${String(hour).padStart(2,'0')}:00`:`${formatDateKo(first.date,true)} · ${String(first.hour).padStart(2,'0')}:00 ~ ${String((last.hour+1)%24).padStart(2,'0')}:00 · ${cells.length}시간`;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet time-slot-sheet" id="timeBlockForm"><h2>${rangeTitle}</h2><div class="slot-picker">
     ${TIME_CATS.map(c=>`<button type="button" class="slot-option ${currentCat===c.key?'selected':''}" style="--cat:${c.color}" data-slot-cat="${c.key}"><b>${esc(c.label)}</b><small>${esc(c.ko)}</small></button>`).join('')}
-  </div><input type="hidden" name="category" value="${esc(currentCat)}"><div class="slot-note"><label>무엇을 했나요?<textarea name="note" maxlength="160" placeholder="예: KB증권 GEO 리포트 수정">${esc(existing?.note||'')}</textarea></label></div><div class="actions"><div>${one&&existing?'<button type="button" class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
+  </div>
+  <input type="hidden" name="category" value="${esc(currentCat)}">
+  <div class="time-link-select"><label>연결할 Work / Life<select name="linkedRecord">
+    <option value="">연결 안 함</option>
+    ${links.map(x=>`<option value="${x.type}|${x.id}" ${existing?.linkedRecordId===x.id?'selected':''}>${x.type==='work'?'Work':'Life'} · ${esc(x.title)}</option>`).join('')}
+  </select></label></div>
+  <div class="slot-note"><label>무엇을 했나요?<textarea name="note" maxlength="160" placeholder="연결 항목을 선택하면 같은 내용을 다시 쓸 필요가 없습니다.">${esc(existing?.note||'')}</textarea></label></div>
+  <div class="helper">연결하면 Work/Life 항목에 실제 투입 시간이 자동 누적됩니다.</div>
+  <div class="actions"><div>${one&&existing?'<button type="button" class="btn danger" id="removeTimeBlock">기록 삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
   const form=document.querySelector('#timeBlockForm');
+  const linkSelect=form.elements.linkedRecord;
+  linkSelect?.addEventListener('change',()=>{if(linkSelect.value&&!form.elements.note.value){const [,id]=linkSelect.value.split('|');form.elements.note.value=linkedRecordLabel(id)}});
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
   document.querySelectorAll('[data-slot-cat]').forEach(b=>b.onclick=()=>{form.category.value=b.dataset.slotCat;document.querySelectorAll('[data-slot-cat]').forEach(x=>x.classList.toggle('selected',x===b))});
   form.onsubmit=async e=>{
     e.preventDefault();const fd=new FormData(e.target),category=fd.get('category');if(!category){toast('카테고리를 선택하세요.');return}
     const note=String(fd.get('note')||'').trim();
-    await Promise.all(cells.map(cell=>{const old=timeBlocks().find(b=>b.date===cell.date&&b.hour===cell.hour);return save({...(old||{}),id:old?.id||'tb-'+cell.date+'-'+cell.hour,recordType:'timeblock',date:cell.date,hour:cell.hour,category,note,receivedAt:old?.receivedAt||new Date().toISOString(),deletedAt:null})}));
+    const link=String(fd.get('linkedRecord')||'');
+    const [linkedRecordType,linkedRecordId]=link?link.split('|'):['',''];
+    await Promise.all(cells.map(cell=>{const old=timeBlocks().find(b=>b.date===cell.date&&b.hour===cell.hour);return save({...(old||{}),id:old?.id||'tb-'+cell.date+'-'+cell.hour,recordType:'timeblock',date:cell.date,hour:cell.hour,category,note,linkedRecordId,linkedRecordType,receivedAt:old?.receivedAt||new Date().toISOString(),deletedAt:null})}));
     document.querySelector('#modal').remove();render();
   };
   document.querySelector('#removeTimeBlock')?.addEventListener('click',async()=>{if(existing)await deleteDoc(doc(db,'users',user.uid,'tasks',existing.id));document.querySelector('#modal').remove();render()});
@@ -1460,18 +1546,14 @@ function financePage(){
       </div>
     </div>
 
-    <div class="metrics" style="margin-top:14px">
-      <div class="m" style="background:linear-gradient(145deg,#2d2528,#242024)!important"><span>이번 달 지출</span><b>${money(expense)}</b></div>
-      <div class="m" style="background:linear-gradient(145deg,#24302b,#1e2723)!important"><span>이번 달 수입</span><b>${money(income)}</b></div>
-      <div class="m" style="background:linear-gradient(145deg,#252c34,#1e252b)!important"><span>수입 - 지출</span><b>${money(income-expense)}</b></div>
-      <div class="m" style="background:linear-gradient(145deg,#292b30,#222429)!important"><span>예산 잔여</span><b>${budgetAmount?money(remaining):'-'}</b></div>
-    </div>
+    <div class="page-section-title"><h2>Analysis</h2><small>전월·고정비·저축률</small></div>
     <div class="finance-insights">
       <div class="insight-card"><small>전월 대비 지출</small><b>${delta===null?'-':(delta>0?'+':'')+delta+'%'}</b><span>${prevMonth.replace('-','.')} 대비</span></div>
       <div class="insight-card"><small>가장 많이 늘어난 카테고리</small><b>${incCat&&incCat.diff>0?incCat.label:'-'}</b><span>${incCat&&incCat.diff>0?'+'+money(incCat.diff):'증가 없음'}</span></div>
       <div class="insight-card"><small>고정비 비중</small><b>${fixedRatio}%</b><span>${money(fixed)} / 총지출</span></div>
       <div class="insight-card"><small>순저축률</small><b>${savingRate===null?'-':savingRate+'%'}</b><span>수입 대비 잔여 금액 기준</span></div>
     </div>
+    <div class="page-section-title"><h2>Detail</h2><small>내역과 카테고리</small></div>
     <div class="finance-grid">
       <div class="card">
         <div class="section-head">${doodleIcon('finance')}<h3>이번 달 내역</h3></div>
@@ -1520,21 +1602,82 @@ function budgetModal(){
   document.querySelector('#budgetForm').onsubmit=async e=>{e.preventDefault();const amount=Number(new FormData(e.target).get('amount'))||0;await save({...(current||{}),id:current?.id||'fb-'+financeMonth,recordType:'financebudget',month:financeMonth,amount,receivedAt:current?.receivedAt||new Date().toISOString(),deletedAt:null});document.querySelector('#modal').remove();render()};
 }
 
+function reviewPage(){
+  const dates=weekRange(0),prevDates=weekRange(-1),review=currentWeeklyReview(),wg=currentWeekGoal();
+  const workDue=tasks.filter(t=>t.recordType==='work'&&!t.deletedAt&&dates.includes(t.due));
+  const workDone=workDue.filter(t=>t.status==='done').length;
+  const workRate=workDue.length?Math.round(workDone/workDue.length*100):0;
+  const overdue=visibleOpen().filter(t=>t.due&&t.due<todayStr()).length;
+  const hs=habits();
+  const habitTarget=hs.reduce((sum,h)=>sum+(h.repeatDays||[1,1,1,1,1,1,1]).filter(Boolean).length,0);
+  const habitDone=hs.reduce((sum,h)=>sum+dates.filter((d,i)=>(h.repeatDays||[1,1,1,1,1,1,1])[i]&&h.logs?.[d]).length,0);
+  const habitRate=habitTarget?Math.round(habitDone/habitTarget*100):0;
+  const weekBlocks=timeBlocks().filter(b=>dates.includes(b.date));
+  const timeTotal=weekBlocks.length;
+  const totals={};TIME_CATS.forEach(c=>totals[c.key]=0);weekBlocks.forEach(b=>totals[b.category]=(totals[b.category]||0)+1);
+  const top=TIME_CATS.slice().sort((a,b)=>(totals[b.key]||0)-(totals[a.key]||0))[0];
+  const topName=totals[top.key]?top.label.replace(/^For\s+/,''):'-';
+  const weekExpense=financeEntries().filter(x=>x.type==='expense'&&dates.includes(x.date)).reduce((a,b)=>a+Number(b.amount||0),0);
+  const prevExpense=financeEntries().filter(x=>x.type==='expense'&&prevDates.includes(x.date)).reduce((a,b)=>a+Number(b.amount||0),0);
+  const expDelta=prevExpense?Math.round((weekExpense-prevExpense)/prevExpense*100):null;
+  return `<section class="page-review">
+    <div class="hero">
+      <div><h1>Weekly Review</h1><p>${formatDateKo(dates[0],true)} ~ ${formatDateKo(dates[6],true)} · 이번 주를 한 번에 정리합니다.</p></div>
+      <button class="btn secondary" id="reviewHome">Home</button>
+    </div>
+    <div class="review-grid">
+      <div class="review-metric"><small>WORK · 마감 준수</small><b>${workRate}%</b><span>${workDone}/${workDue.length} 완료 · 지연 ${overdue}</span></div>
+      <div class="review-metric"><small>LIFE · HABIT</small><b>${habitRate}%</b><span>${habitDone}/${habitTarget} 수행</span></div>
+      <div class="review-metric"><small>TIME · 기록</small><b>${timeTotal}h</b><span>가장 많은 영역 · ${esc(topName)}</span></div>
+      <div class="review-metric"><small>FINANCE · 주간 지출</small><b>${money(weekExpense)}</b><span>${expDelta===null?'전주 비교 없음':(expDelta>0?'+':'')+expDelta+'% vs 전주'}</span></div>
+    </div>
+    <div class="review-layout">
+      <div class="card">
+        <div class="section-head">${doodleIcon('star')}<h3>이번 주 1 Goal</h3></div>
+        <div class="review-goal">
+          <div class="review-goal-top"><div><small>ONE THING</small><b>${esc(wg?.text||'아직 1 Goal이 없습니다.')}</b></div><button class="section-action" id="editWeekGoalReview">${wg?.text?'수정':'입력'}</button></div>
+          <label class="review-goal-check"><input type="checkbox" id="reviewGoalDone" ${review?.goalDone?'checked':''}> 이번 주 1 Goal을 해냈다</label>
+        </div>
+        <div class="review-note" style="margin-top:14px"><label>이번 주 한 줄 평가<textarea id="reviewNote" maxlength="240" placeholder="예: 중요한 일은 끝냈지만 저녁 시간을 너무 흘려보냈다.">${esc(review?.note||'')}</textarea></label></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn" id="saveWeeklyReview">Review 저장</button></div>
+      </div>
+      <div class="card">
+        <div class="section-head">${doodleIcon('scribble')}<h3>이번 주 숫자</h3></div>
+        <div class="review-list">
+          <div class="review-line"><span>완료한 Work</span><b>${workDone}개</b></div>
+          <div class="review-line"><span>현재 지연 Work</span><b>${overdue}개</b></div>
+          <div class="review-line"><span>Habit 달성</span><b>${habitRate}%</b></div>
+          <div class="review-line"><span>기록 Time</span><b>${timeTotal}h / 168h</b></div>
+          <div class="review-line"><span>업무/할 일 연결 시간</span><b>${weekBlocks.filter(x=>x.linkedRecordId).length}h</b></div>
+          <div class="review-line"><span>주간 지출</span><b>${money(weekExpense)}</b></div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
+async function saveWeeklyReview(){
+  const old=currentWeeklyReview();
+  await save({...(old||{}),id:old?.id||'wr-'+iso(startOfWeek()),recordType:'weeklyreview',weekStart:iso(startOfWeek()),goalDone:!!document.querySelector('#reviewGoalDone')?.checked,note:String(document.querySelector('#reviewNote')?.value||'').trim(),receivedAt:old?.receivedAt||new Date().toISOString(),updatedAt:new Date().toISOString(),deletedAt:null});
+  toast('Weekly Review 저장 완료');
+}
 function placeholder(n){
   const ko={Life:'개인 할 일과 습관을 관리하는 영역입니다.',Time:'시간 사용을 기록하고 주간 흐름을 보는 영역입니다.',Finance:'소비와 예산을 관리하는 영역입니다.'};
   return `<div class="placeholder"><div class="card"><small>다음 구축 영역</small><h1 style="font-size:42px;margin:10px 0">${n}</h1><p>${ko[n]||'다음 단계에서 연결합니다.'}</p></div></div>`;
 }
 
 function quickAddModal(){
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet"><h2>빠른 추가</h2><div class="helper" style="margin-bottom:14px">추가할 항목을 선택하세요.</div><div class="quick-add-choice">
-    <button type="button" class="quick-add-option" id="quickWork">${doodleIcon('work')}<b>Work</b><small>업무와 마감일을 빠르게 추가</small></button>
-    <button type="button" class="quick-add-option" id="quickLife">${doodleIcon('life')}<b>Life</b><small>개인 할 일과 마감일을 빠르게 추가</small></button>
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet"><h2>빠른 추가</h2><div class="helper" style="margin-bottom:14px">지금 기록할 항목을 선택하세요.</div><div class="quick-add-choice four">
+    <button type="button" class="quick-add-option" id="quickWork">${doodleIcon('work')}<b>Work</b><small>업무와 마감일</small></button>
+    <button type="button" class="quick-add-option" id="quickLife">${doodleIcon('life')}<b>Life</b><small>개인 할 일</small></button>
+    <button type="button" class="quick-add-option time-q" id="quickTime">${doodleIcon('time')}<b>Time</b><small>현재 시간 기록</small></button>
+    <button type="button" class="quick-add-option finance-q" id="quickFinance">${doodleIcon('finance')}<b>Finance</b><small>수입·지출 기록</small></button>
   </div><div class="actions"><div></div><button type="button" class="btn secondary" id="cancelQuickAdd">취소</button></div></div></div>`);
   document.querySelector('#cancelQuickAdd').onclick=()=>document.querySelector('#modal').remove();
   document.querySelector('#quickWork').onclick=()=>{document.querySelector('#modal').remove();taskModal(null,true)};
   document.querySelector('#quickLife').onclick=()=>{document.querySelector('#modal').remove();personalModal()};
+  document.querySelector('#quickTime').onclick=()=>{document.querySelector('#modal').remove();timeBlockModal(todayStr(),new Date().getHours())};
+  document.querySelector('#quickFinance').onclick=()=>{document.querySelector('#modal').remove();financeModal()};
 }
-
 function taskModal(task=null,quick=false){
   const editing=!!task;
   const t=task||{recordType:'work',title:'',due:todayStr(),requester:'',channel:'Slack',project:'',category:'기타',priority:'medium',note:'',status:'todo'};
@@ -1615,6 +1758,11 @@ function bind(){
   document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});
   document.querySelector('#logout')?.addEventListener('click',()=>signOut(auth));
   document.querySelector('#quickAdd')?.addEventListener('click',quickAddModal);
+  document.querySelector('#openWeeklyReview')?.addEventListener('click',()=>{page='review';render()});
+  document.querySelector('#openWeeklyReview2')?.addEventListener('click',()=>{page='review';render()});
+  document.querySelector('#reviewHome')?.addEventListener('click',()=>{page='home';render()});
+  document.querySelector('#editWeekGoalReview')?.addEventListener('click',weekGoalModal);
+  document.querySelector('#saveWeeklyReview')?.addEventListener('click',saveWeeklyReview);
   document.querySelector('#addTask')?.addEventListener('click',()=>taskModal());
   document.querySelector('#search')?.addEventListener('input',e=>{search=e.target.value;if(page==='work')render()});
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
@@ -1650,7 +1798,7 @@ function render(){
     root.innerHTML=`<div class="auth"><div class="logo">Life Tracker</div><div class="login"><small>PERSONAL OPERATING SYSTEM</small><h1>일과 삶을<br>한 곳에서.</h1><p>업무, 개인 할 일, 시간, 소비를 하나의 대시보드에서 기록하고 관리합니다.</p><button class="btn" id="login">Google로 계속하기</button></div></div>`;
     document.querySelector('#login').onclick=login;return;
   }
-  const c=page==='home'?home():page==='work'?work():page==='life'?life():page==='time'?timePage():page==='finance'?financePage():placeholder(page[0].toUpperCase()+page.slice(1));
+  const c=page==='home'?home():page==='work'?work():page==='life'?life():page==='time'?timePage():page==='finance'?financePage():page==='review'?reviewPage():placeholder(page[0].toUpperCase()+page.slice(1));
   root.innerHTML=`<div class="app ${sideCollapsed?'side-collapsed':''}">${side()}<main class="main">${top()}${c}</main></div>`;bind();
 }
 render();
