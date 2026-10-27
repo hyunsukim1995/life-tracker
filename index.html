@@ -807,6 +807,82 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
   .summary-strip{grid-template-columns:1fr 1fr}
 }
 
+
+/* --- QA PATCH V12: UNIFIED DARK + SECTION ACCENTS --- */
+:root{
+  --work-accent:#70889a;
+  --life-accent:#7f9b82;
+  --time-accent:#86a4b8;
+  --finance-accent:#b0a184;
+  --surface-unified:#1b1d21;
+  --surface-inner:#202228;
+  --surface-line:#30333a;
+}
+.card,.today-card,.finance-period,.insight-card,.review-metric,.finance-calendar{
+  background:var(--surface-unified)!important;
+  border-color:var(--surface-line)!important;
+}
+.work-zone,.life-zone,.habit-zone,.goal-zone,.status-zone{
+  position:relative;
+  background:var(--surface-unified)!important;
+  border-color:var(--surface-line)!important;
+}
+.card.work-zone:before,.card.life-zone:before,.card.habit-zone:before,.card.goal-zone:before,.card.status-zone:before{
+  display:block!important;content:'';position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:99px;
+}
+.card.work-zone:before{background:var(--work-accent)}
+.card.life-zone:before,.card.habit-zone:before,.card.goal-zone:before{background:var(--life-accent)}
+.card.status-zone:before{background:#737b83}
+.work-zone .section-head{color:#aebdca!important}
+.life-zone .section-head,.habit-zone .section-head,.goal-zone .section-head{color:#aec1b0!important}
+.status-zone .section-head{color:#b6b8b9!important}
+.work-zone .doodle-mark{color:var(--work-accent)!important;background:rgba(112,136,154,.08)!important}
+.life-zone .doodle-mark,.habit-zone .doodle-mark,.goal-zone .doodle-mark{color:var(--life-accent)!important;background:rgba(127,155,130,.08)!important}
+.page-work .table{border-top:3px solid var(--work-accent)!important}
+.page-life .m{background:var(--surface-unified)!important;border-top:2px solid var(--life-accent)!important}
+.page-time .card{background:var(--surface-unified)!important;border-color:var(--surface-line)!important;border-top:2px solid rgba(134,164,184,.6)!important}
+.page-time .section-head{color:#afc4d1!important}
+.page-time .doodle-mark{color:var(--time-accent)!important;background:rgba(134,164,184,.08)!important}
+.page-finance .card,.page-finance .finance-calendar,.page-finance .finance-period,.page-finance .insight-card{
+  background:var(--surface-unified)!important;border-color:var(--surface-line)!important;
+}
+.page-finance .section-head{color:#c8bda7!important}
+.page-finance .doodle-mark{color:var(--finance-accent)!important;background:rgba(176,161,132,.08)!important}
+.finance-period{border-top:2px solid rgba(176,161,132,.55)!important}
+.today-card{box-shadow:none!important;border-top:2px solid transparent!important}
+.today-card.home-work-accent{border-top-color:var(--work-accent)!important}
+.today-card.home-life-accent{border-top-color:var(--life-accent)!important}
+.today-card.home-time-accent{border-top-color:var(--time-accent)!important}
+.section-head{border-bottom-color:#303238!important}
+.warn-text{color:#d7a2a2}
+.goal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.goal-card{background:var(--surface-inner)!important;border-color:#34373d!important;padding:16px}
+.goal-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.goal-card-top h4{margin:8px 0 4px}
+.goal-percent{font-size:26px;letter-spacing:-.04em;color:#d8ddd5}
+.goal-tree{margin-top:14px;padding:12px;background:#181a1e;border:1px solid #2d3036;border-radius:7px}
+.goal-tree-label{font-size:9px;letter-spacing:.12em;color:#83a086;font-weight:750;margin:0 0 6px}
+.goal-tree-label.todo{margin-top:12px}
+.goal-tree-item,.goal-tree-empty,.goal-tree-more{font-size:11px;color:#b8b3aa;padding:3px 0 3px 7px}
+.goal-tree-item span{color:#7f7b75;margin-left:5px}
+.goal-tree-empty,.goal-tree-more{color:#6f6c67}
+.goal-card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px}
+.search-summary{display:flex;align-items:baseline;gap:6px;margin:-2px 0 14px;color:#8f8b84}
+.search-summary b{font-size:28px;color:#e7e1d7}
+.search-results{padding:0;overflow:hidden}
+.search-result{width:100%;display:grid;grid-template-columns:88px 1fr 24px;gap:12px;align-items:center;text-align:left;background:transparent;border:0;border-top:1px solid #2c2f35;color:#e6e0d6;padding:14px 16px}
+.search-result:first-child{border-top:0}
+.search-result:hover{background:#202329}
+.search-type{font-size:10px;color:#8fa2ae;text-transform:uppercase;letter-spacing:.06em}
+.search-main b{display:block;font-size:13px}
+.search-main small{display:block;margin-top:4px;color:#88847d}
+.search-arrow{text-align:right;color:#6f7378;font-size:20px}
+.time-cell{user-select:none;-webkit-user-select:none}
+@media(max-width:760px){
+  .goal-grid{grid-template-columns:1fr}
+  .search-result{grid-template-columns:70px 1fr 18px;padding:12px}
+}
+
 </style>
 </head>
 <body>
@@ -838,7 +914,7 @@ const todayStr=()=>iso();
 if(!financeMonth) financeMonth=todayStr().slice(0,7);
 
 function startOfWeek(){
-  const d=new Date(); const day=(d.getDay()+6)%7;
+  const d=new Date(); const day=d.getDay();
   d.setHours(0,0,0,0); d.setDate(d.getDate()-day); return d;
 }
 function endOfWeek(){const d=startOfWeek();d.setDate(d.getDate()+6);return d}
@@ -891,14 +967,20 @@ function linkedRecordLabel(id){
   return t.title||'';
 }
 function weeklyReviews(){return tasks.filter(t=>t.recordType==='weeklyreview'&&!t.deletedAt)}
-function currentWeeklyReview(){return weeklyReviews().find(x=>x.weekStart===iso(startOfWeek()))}
+function currentWeeklyReview(){
+  const dates=weekDates();
+  return weeklyReviews().find(x=>dates.includes(x.weekStart));
+}
 function weekRange(offset=0){
   const start=startOfWeek(); start.setDate(start.getDate()+offset*7);
   const arr=[]; for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);arr.push(iso(d))}
   return arr;
 }
 function weekGoals(){return tasks.filter(t=>t.recordType==='weekgoal'&&!t.deletedAt)}
-function currentWeekGoal(){return weekGoals().find(x=>x.weekStart===iso(startOfWeek()))}
+function currentWeekGoal(){
+  const dates=weekDates();
+  return weekGoals().find(x=>dates.includes(x.weekStart));
+}
 function financeEntries(){return tasks.filter(t=>t.recordType==='financeentry'&&!t.deletedAt)}
 function financeBudgets(){return tasks.filter(t=>t.recordType==='financebudget'&&!t.deletedAt)}
 function monthBudget(month){return financeBudgets().find(x=>x.month===month)}
@@ -1027,6 +1109,24 @@ function doodleIcon(kind){
   const tone=['work','time','finance'].includes(kind)?'sky':'gray';
   return `<span class="doodle-mark ${tone}">${svg[kind]||svg.scribble}</span>`;
 }
+function repeatDayIndex(dateStr){
+  return (new Date(dateStr+'T00:00:00').getDay()+6)%7;
+}
+function habitScheduledOn(h,dateStr){
+  const plan=h.repeatDays||[1,1,1,1,1,1,1];
+  return !!plan[repeatDayIndex(dateStr)];
+}
+function habitWeekStats(h,dates=weekDates()){
+  const elapsed=dates.filter(d=>d<=todayStr());
+  const scheduled=elapsed.filter(d=>habitScheduledOn(h,d));
+  const done=scheduled.filter(d=>h.logs?.[d]).length;
+  return {done,target:scheduled.length,rate:scheduled.length?Math.round(done/scheduled.length*100):0};
+}
+function habitRepeatText(h){
+  const plan=h.repeatDays||[1,1,1,1,1,1,1];
+  const order=[['일',6],['월',0],['화',1],['수',2],['목',3],['금',4],['토',5]];
+  return order.filter(([,idx])=>plan[idx]).map(([label])=>label).join(' · ')||'요일 미선택';
+}
 function side(){
   return `<aside class="side ${sideCollapsed?'collapsed':''}">
     <div class="side-top"><div class="brand" id="brandHome"><span class="brand-text">Life Tracker</span><span class="brand-mini">${sideCollapsed?'LT':''}</span></div><button class="side-toggle" id="sideToggle" title="메뉴 열기/닫기">${sideCollapsed?'›':'‹'}</button></div>
@@ -1038,11 +1138,10 @@ function side(){
 }
 function top(){
   return `<div class="top">
-    <input id="search" class="search" placeholder="업무, 개인 할 일, 프로젝트, 요청자 검색..." value="${esc(search)}">
+    <input id="search" class="search" placeholder="전체 검색 · Work, Life, Habit, Goal, Time, Finance..." value="${esc(search)}">
     <span class="sync">● 동기화됨</span>
   </div>`;
 }
-
 function home(){
   const open=visibleOpen();
   const workToday=open.filter(x=>x.due===todayStr());
@@ -1052,28 +1151,31 @@ function home(){
   const personalToday=personalOpen.filter(x=>x.due===todayStr());
   const hs=liveLife('habit');
   const dates=weekDates();
-  const dayIdx=(new Date().getDay()+6)%7;
-  const scheduledToday=hs.filter(h=>(h.repeatDays||[1,1,1,1,1,1,1])[dayIdx]);
+  const scheduledToday=hs.filter(h=>habitScheduledOn(h,todayStr()));
   const habitDoneToday=scheduledToday.filter(h=>h.logs?.[todayStr()]);
+  const stats=hs.map(h=>habitWeekStats(h,dates));
+  const scheduled=stats.reduce((sum,x)=>sum+x.target,0);
+  const checked=stats.reduce((sum,x)=>sum+x.done,0);
+  const habitMissing=Math.max(0,scheduled-checked);
   const todayTime=timeBlocks().filter(b=>b.date===todayStr());
-  const scheduled=hs.reduce((sum,h)=>sum+(h.repeatDays||[1,1,1,1,1,1,1]).filter(Boolean).length,0);
-  const checked=hs.reduce((sum,h)=>sum+dates.filter((d,i)=>(h.repeatDays||[1,1,1,1,1,1,1])[i]&&h.logs?.[d]).length,0);
   const priority=[...open].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).slice(0,5);
   const lifePriority=[...personalOpen].sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).slice(0,5);
   return `<section>
     <div class="hero">
-      <div><h1>Work & Life</h1><p>업무와 개인 생활을 따로 보지 않고, 오늘 놓치면 안 되는 것부터 한 화면에서 봅니다.</p></div>
+      <div><h1>Work & Life</h1><p>오늘 해야 할 것과 이번 주에 이상이 생긴 지점만 빠르게 확인합니다.</p></div>
       <div class="hero-actions"><button class="btn secondary" id="openWeeklyReview">Weekly Review</button><button class="btn" id="quickAdd">＋ 빠른 추가</button></div>
     </div>
+
     <div class="page-section-title"><h2>Today</h2><small>오늘 행동 중심</small></div>
     <div class="today-board">
-      <div class="today-card"><small>TODAY · WORK</small><h4>오늘 Work</h4><div class="today-mini-list">${workToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 마감 업무 없음</span>'}</div></div>
-      <div class="today-card"><small>TODAY · LIFE</small><h4>오늘 Life</h4><div class="today-mini-list">${personalToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 할 일 없음</span>'}</div></div>
-      <div class="today-card"><small>TODAY · HABIT</small><h4>오늘 Habit</h4><div class="today-big">${habitDoneToday.length}/${scheduledToday.length}</div><div class="today-mini-list">${scheduledToday.slice(0,2).map(h=>`<span>${h.logs?.[todayStr()]?'✓':'○'} ${esc(h.title)}</span>`).join('')}</div></div>
-      <div class="today-card"><small>TODAY · TIME</small><h4>오늘 Time</h4><div class="today-big">${todayTime.length}h</div><div class="today-mini-list"><span>24시간 중 ${Math.round(todayTime.length/24*100)}% 기록</span></div></div>
+      <div class="today-card home-work-accent"><small>TODAY · WORK</small><h4>오늘 Work</h4><div class="today-mini-list">${workToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 마감 업무 없음</span>'}</div></div>
+      <div class="today-card home-life-accent"><small>TODAY · LIFE</small><h4>오늘 Life</h4><div class="today-mini-list">${personalToday.slice(0,3).map(t=>`<span>· ${esc(t.title)}</span>`).join('')||'<span>오늘 할 일 없음</span>'}</div></div>
+      <div class="today-card home-life-accent"><small>TODAY · HABIT</small><h4>오늘 Habit</h4><div class="today-big">${habitDoneToday.length}/${scheduledToday.length}</div><div class="today-mini-list">${scheduledToday.slice(0,2).map(h=>`<span>${h.logs?.[todayStr()]?'✓':'○'} ${esc(h.title)}</span>`).join('')||'<span>오늘 예정 Habit 없음</span>'}</div></div>
+      <div class="today-card home-time-accent"><small>TODAY · TIME</small><h4>오늘 Time</h4><div class="today-big">${todayTime.length}h</div><div class="today-mini-list"><span>24시간 중 ${Math.round(todayTime.length/24*100)}% 기록</span></div></div>
     </div>
 
     <div class="home-review-cta"><div><small>WEEKLY REVIEW</small><b>Work · Life · Time · Finance를 한 번에 돌아보기</b></div><button class="section-action" id="openWeeklyReview2">이번 주 보기</button></div>
+
     <div class="page-section-title"><h2>To do</h2><small>마감과 우선순위</small></div>
     <div class="home-duo">
       <div class="card work-zone">
@@ -1087,14 +1189,18 @@ function home(){
         ${lifePriority.map(t=>`<div class="home-life-item"><span class="check" data-personal-done="${t.id}"></span><div class="life-title" data-personal-edit="${t.id}"><b>${esc(t.title)}</b><small>${esc(t.area||'Other · 기타')}</small></div><span class="due ${t.due&&dd(t.due)<0?'late':''}">${formatDateKo(t.due)}<span class="date-inline">${dueLabel(t)}</span></span></div>`).join('')||'<p class="empty">개인 할 일이 없습니다.</p>'}
       </div>
     </div>
+
     <div class="home-duo">
       <div class="card habit-zone">
         <div class="section-head">${doodleIcon('star')}<h3>이번 주 Habit</h3></div>
-        ${hs.slice(0,5).map(h=>{const plan=h.repeatDays||[1,1,1,1,1,1,1];const done=dates.filter((d,i)=>plan[i]&&h.logs?.[d]).length;return `<div class="kv"><span>${esc(h.title)}</span><span class="area">${done}/${plan.filter(Boolean).length}</span></div>`}).join('')||'<p class="empty">Habit이 없습니다.</p>'}
+        ${hs.slice(0,5).map(h=>{const st=habitWeekStats(h,dates);return `<div class="kv"><span>${esc(h.title)}</span><span class="area">${st.target?st.done+'/'+st.target:'예정 없음'}</span></div>`}).join('')||'<p class="empty">Habit이 없습니다.</p>'}
       </div>
-      <div class="card goal-zone">
-        <div class="section-head">${doodleIcon('scribble')}<h3>Goal progress</h3></div>
-        ${liveLife('goal').slice(0,5).map(g=>{const todos=lifeTodos().filter(t=>!t.deletedAt&&t.goalId===g.id),hs2=habits().filter(h=>!h.deletedAt&&h.goalId===g.id);const tr=todos.length?todos.filter(t=>t.status==='done').length/todos.length:null;const hrs=hs2.map(h=>{const p=h.repeatDays||[1,1,1,1,1,1,1],tg=p.filter(Boolean).length;if(!tg)return null;return dates.filter((d,i)=>p[i]&&h.logs?.[d]).length/tg}).filter(v=>v!==null);const hr=hrs.length?hrs.reduce((a,b)=>a+b,0)/hrs.length:null;const rr=[tr,hr].filter(v=>v!==null);const p=rr.length?Math.round(rr.reduce((a,b)=>a+b,0)/rr.length*100):Number(g.progress)||0;return `<div style="padding:10px 0;border-top:1px solid #2b2d32"><div style="display:flex;justify-content:space-between;gap:12px"><span>${esc(g.title)}</span><b>${p}%</b></div><div class="progress"><i style="width:${p}%"></i></div></div>`}).join('')||'<p class="empty">Goal이 없습니다.</p>'}
+      <div class="card status-zone">
+        <div class="section-head">${doodleIcon('scribble')}<h3>이번 주 상태</h3></div>
+        <div class="kv"><span>지연 Work</span><b class="${late.length?'warn-text':''}">${late.length}개</b></div>
+        <div class="kv"><span>오늘 미완료 Life</span><b class="${personalToday.length?'warn-text':''}">${personalToday.length}개</b></div>
+        <div class="kv"><span>현재까지 미체크 Habit</span><b class="${habitMissing?'warn-text':''}">${habitMissing}회</b></div>
+        <div class="helper">${late.length||personalToday.length||habitMissing?'확인이 필요한 항목이 있습니다.':'현재까지 특이사항이 없습니다.'}</div>
       </div>
     </div>
   </section>`;
@@ -1164,8 +1270,9 @@ function life(){
   const week=todos.filter(t=>t.status!=='done'&&inThisWeek(t.due));
   const doneToday=todos.filter(isTodayCompleted);
   const dates=weekDates();
-  const habitDone=hs.reduce((sum,h)=>sum+dates.filter((d,i)=>(h.repeatDays||[1,1,1,1,1,1,1])[i]&&h.logs?.[d]).length,0);
-  const habitTarget=hs.reduce((sum,h)=>sum+(h.repeatDays||[1,1,1,1,1,1,1]).filter(Boolean).length,0);
+  const stats=hs.map(h=>habitWeekStats(h,dates));
+  const habitDone=stats.reduce((sum,x)=>sum+x.done,0);
+  const habitTarget=stats.reduce((sum,x)=>sum+x.target,0);
   const habitRate=habitTarget?Math.min(100,Math.round(habitDone/habitTarget*100)):0;
   const ordered=[...todos].filter(t=>t.status!=='done').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
   return `<section class="page-life">
@@ -1188,7 +1295,7 @@ function life(){
       <div class="card habit-zone">
         <div class="section-head">${doodleIcon('star')}<h3>이번 주 Habit</h3><button class="section-action" id="addHabit">＋ Habit</button></div>
         <div class="habit-row">
-          <div></div>${dates.map(d=>`<div class="habit-head">${weekdayLabel(d)}</div>`).join('')}<div class="habit-head">주간</div><div></div>
+          <div></div>${dates.map(d=>`<div class="habit-head">${weekdayLabel(d)}</div>`).join('')}<div class="habit-head">진행</div><div></div>
         </div>
         ${hs.map(h=>habitRow(h,dates)).join('')||'<p>등록된 Habit이 없습니다.</p>'}
       </div>
@@ -1212,40 +1319,42 @@ function personalRow(t){
   </div>`;
 }
 function habitRow(h,dates){
-  const plan=h.repeatDays||[1,1,1,1,1,1,1];
-  const count=dates.filter((d,i)=>plan[i]&&h.logs?.[d]).length;
-  const target=plan.filter(Boolean).length;
+  const st=habitWeekStats(h,dates);
   const g=goals().find(x=>x.id===h.goalId);
   return `<div class="habit-row">
-    <div class="life-title" data-habit-edit="${h.id}"><b>${esc(h.title)}</b><small>매주 반복 · ${plan.map((v,i)=>v?['월','화','수','목','금','토','일'][i]:'').filter(Boolean).join(' ')||'요일 미선택'}</small>
+    <div class="life-title" data-habit-edit="${h.id}"><b>${esc(h.title)}</b><small>매주 반복 · ${habitRepeatText(h)}</small>
       ${g?`<div class="parent-path"><b>${esc(g.title)}</b> → Habit</div>`:''}
     </div>
-    ${dates.map((d,i)=>`<button class="habit-day ${plan[i]?'scheduled':'offday'} ${h.logs?.[d]?'on':''}" ${plan[i]?`data-habit="${h.id}" data-date="${d}"`:'disabled'}>${h.logs?.[d]?'✓':['월','화','수','목','금','토','일'][i]}</button>`).join('')}
-    <div style="font-size:11px;text-align:center">${count}/${target}</div>
+    ${dates.map(d=>{const scheduled=habitScheduledOn(h,d);return `<button class="habit-day ${scheduled?'scheduled':'offday'} ${h.logs?.[d]?'on':''}" ${scheduled?`data-habit="${h.id}" data-date="${d}"`:'disabled'}>${h.logs?.[d]?'✓':weekdayLabel(d)}</button>`}).join('')}
+    <div style="font-size:11px;text-align:center">${st.target?st.done+'/'+st.target:'-'}</div>
     <button class="linkbtn" data-life-trash="${h.id}">삭제</button>
   </div>`;
 }
 function goalCard(g){
-  const linkedTodos=lifeTodos().filter(t=>!t.deletedAt&&t.goalId===g.id);
   const linkedHabits=habits().filter(h=>!h.deletedAt&&h.goalId===g.id);
+  const habitIds=new Set(linkedHabits.map(h=>h.id));
+  const linkedTodos=lifeTodos().filter(t=>!t.deletedAt&&(t.goalId===g.id||habitIds.has(t.habitId)));
   const todoRate=linkedTodos.length?linkedTodos.filter(t=>t.status==='done').length/linkedTodos.length:null;
-  const dates=weekDates();
   const habitRates=linkedHabits.map(h=>{
-    const plan=h.repeatDays||[1,1,1,1,1,1,1],target=plan.filter(Boolean).length;
-    if(!target)return null;
-    const done=dates.filter((d,i)=>plan[i]&&h.logs?.[d]).length;
-    return done/target;
+    const st=habitWeekStats(h);
+    return st.target?st.done/st.target:null;
   }).filter(v=>v!==null);
   const habitRate=habitRates.length?habitRates.reduce((a,b)=>a+b,0)/habitRates.length:null;
   const rates=[todoRate,habitRate].filter(v=>v!==null);
   const progress=rates.length?Math.round(rates.reduce((a,b)=>a+b,0)/rates.length*100):Number(g.progress)||0;
+  const visibleTodos=linkedTodos.slice(0,4);
   return `<div class="goal-card">
-    <span class="area">${esc(g.area||'Other · 기타')}</span>
-    <h4 data-goal-edit="${g.id}">${esc(g.title)}</h4>
+    <div class="goal-card-top"><div><span class="area">${esc(g.area||'Other · 기타')}</span><h4 data-goal-edit="${g.id}">${esc(g.title)}</h4></div><b class="goal-percent">${progress}%</b></div>
     <small>${g.targetDate?'목표 '+formatDateKo(g.targetDate,true):'목표일 없음'}</small>
-    <div class="goal-link-meta"><span>Habit ${linkedHabits.length}</span><span>Todo ${linkedTodos.length}</span><span>자동 진행 ${rates.length?'ON':'OFF'}</span></div>
+    <div class="goal-tree">
+      <div class="goal-tree-label">HABIT</div>
+      ${linkedHabits.length?linkedHabits.map(h=>`<div class="goal-tree-item">└ ${esc(h.title)} <span>${esc(habitRepeatText(h))}</span></div>`).join(''):'<div class="goal-tree-empty">└ 연결된 Habit 없음</div>'}
+      <div class="goal-tree-label todo">TODO</div>
+      ${visibleTodos.length?visibleTodos.map(t=>`<div class="goal-tree-item">└ ${t.status==='done'?'✓ ':'○ '}${esc(t.title)}</div>`).join(''):'<div class="goal-tree-empty">└ 연결된 Todo 없음</div>'}
+      ${linkedTodos.length>visibleTodos.length?`<div class="goal-tree-more">+ ${linkedTodos.length-visibleTodos.length}개 더</div>`:''}
+    </div>
     <div class="progress"><i style="width:${Math.max(0,Math.min(100,progress))}%"></i></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px"><small>${progress}%</small><button class="linkbtn" data-life-trash="${g.id}">삭제</button></div>
+    <div class="goal-card-foot"><small>${rates.length?'Habit + Todo 자동 계산':'수동 진행률'}</small><button class="linkbtn" data-life-trash="${g.id}">삭제</button></div>
   </div>`;
 }
 function lifeAreas(selected='Other · 기타'){
@@ -1262,7 +1371,7 @@ function lifeAreas(selected='Other · 기타'){
   return areas.map(v=>`<option ${selected===v?'selected':''}>${v}</option>`).join('');
 }
 function personalModal(item=null){
-  const editing=!!item,t=item||{recordType:'personal',title:'',due:todayStr(),area:'Other · 기타',status:'todo',goalId:'',habitId:'',repeat:'none',note:''};
+  const editing=!!item,t=item||{recordType:'personal',title:'',due:todayStr(),area:'Other · 기타',status:'todo',goalId:'',habitId:'',note:''};
   const liveGoals=liveLife('goal'),liveHabits=liveLife('habit');
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="personalForm">
     <h2>${editing?'개인 할 일 수정':'개인 할 일 추가'}</h2>
@@ -1271,11 +1380,10 @@ function personalModal(item=null){
       <label>영역<select name="area">${lifeAreas(t.area)}</select></label>
       <label>관련 Habit<select name="habitId"><option value="">연결 안 함</option>${liveHabits.map(h=>`<option value="${h.id}" ${t.habitId===h.id?'selected':''}>${esc(h.title)}</option>`).join('')}</select></label>
       <label>관련 Goal<select name="goalId"><option value="">연결 안 함</option>${liveGoals.map(g=>`<option value="${g.id}" ${t.goalId===g.id?'selected':''}>${esc(g.title)}</option>`).join('')}</select></label>
-      <label>반복<select name="repeat"><option value="none" ${t.repeat==='none'?'selected':''}>반복 없음</option><option value="weekly" ${t.repeat==='weekly'?'selected':''}>매주</option><option value="monthly" ${t.repeat==='monthly'?'selected':''}>매월</option></select></label>
       <label>상태<select name="status"><option value="todo" ${t.status==='todo'?'selected':''}>할 일</option><option value="done" ${t.status==='done'?'selected':''}>완료</option></select></label>
       <label class="full">메모<textarea name="note">${esc(t.note||'')}</textarea></label>
     </div></details>
-    <div class="helper">Habit을 연결하면 그 Habit에 연결된 Goal을 자동으로 따라갑니다.</div>
+    <div class="helper">반복 행동은 Habit에서 관리합니다. Habit을 연결하면 그 Habit에 연결된 Goal을 자동으로 따라갑니다.</div>
     <div class="actions"><div>${editing?'<button type="button" class="btn secondary" id="lifeMoveTrash">휴지통으로 이동</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">${editing?'저장':'추가'}</button></div></div>
   </form></div>`);
   bindCalendarFields(document.querySelector('#personalForm'));
@@ -1287,13 +1395,14 @@ function personalModal(item=null){
     e.preventDefault();const f=new FormData(e.target),status=f.get('status')||'todo',habitId=f.get('habitId')||'';
     const parentHabit=liveHabits.find(x=>x.id===habitId);
     const goalId=parentHabit?.goalId||f.get('goalId')||'';
-    await save({...t,id:editing?t.id:'p-'+Date.now(),recordType:'personal',title:String(f.get('title')||'').trim(),due:f.get('due')||todayStr(),area:f.get('area')||'Other · 기타',habitId,goalId,repeat:f.get('repeat')||'none',status,note:String(f.get('note')||'').trim(),receivedAt:editing?(t.receivedAt||new Date().toISOString()):new Date().toISOString(),completedAt:status==='done'?(t.completedAt||new Date().toISOString()):null,deletedAt:null});
+    await save({...t,id:editing?t.id:'p-'+Date.now(),recordType:'personal',title:String(f.get('title')||'').trim(),due:f.get('due')||todayStr(),area:f.get('area')||'Other · 기타',habitId,goalId,repeat:'none',status,note:String(f.get('note')||'').trim(),receivedAt:editing?(t.receivedAt||new Date().toISOString()):new Date().toISOString(),completedAt:status==='done'?(t.completedAt||new Date().toISOString()):null,deletedAt:null});
     document.querySelector('#modal').remove();render();
   };
 }
 function habitModal(item=null){
   const editing=!!item,h=item||{recordType:'habit',title:'',repeatDays:[1,1,1,1,1,0,0],logs:{},area:'For health · 건강을 위해',repeat:'weekly',goalId:''};
   const plan=h.repeatDays||[1,1,1,1,1,1,1],liveGoals=liveLife('goal');
+  const dayOrder=[['일',6],['월',0],['화',1],['수',2],['목',3],['금',4],['토',5]];
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet" id="habitForm">
     <h2>${editing?'Habit 수정':'Habit 추가'}</h2>
     <div class="form">
@@ -1303,7 +1412,7 @@ function habitModal(item=null){
       <label>반복<select name="repeat"><option value="weekly" selected>매주 반복</option></select></label>
       <label class="full">반복 요일
         <div class="schedule-picker">
-          ${['월','화','수','목','금','토','일'].map((d,i)=>`<label class="${plan[i]?'on':''}"><input type="checkbox" name="day${i}" ${plan[i]?'checked':''}>${d}</label>`).join('')}
+          ${dayOrder.map(([d,idx])=>`<label class="${plan[idx]?'on':''}"><input type="checkbox" name="day${idx}" ${plan[idx]?'checked':''}>${d}</label>`).join('')}
         </div>
       </label>
     </div>
@@ -1444,16 +1553,41 @@ function timeBlockModal(date,hour,selection=null){
 }
 function bindTimeDrag(){
   const cells=[...document.querySelectorAll('[data-time-date]')];
-  let active=false,startDate='',selected=[];
-  const add=cell=>{if(cell.dataset.timeDate!==startDate)return;if(!selected.includes(cell)){selected.push(cell);cell.classList.add('drag-select')}};
+  let active=false,startDate='',selected=[],ignoreMouseUntil=0;
+  const add=cell=>{if(!cell||cell.dataset.timeDate!==startDate)return;if(!selected.includes(cell)){selected.push(cell);cell.classList.add('drag-select')}};
   const finish=()=>{if(!active)return;active=false;const picked=selected.map(c=>({date:c.dataset.timeDate,hour:Number(c.dataset.timeHour)}));selected.forEach(c=>c.classList.remove('drag-select'));selected=[];if(picked.length)timeBlockModal(picked[0].date,picked[0].hour,picked)};
   cells.forEach(cell=>{
-    cell.addEventListener('mousedown',e=>{if(e.button!==0)return;e.preventDefault();active=true;startDate=cell.dataset.timeDate;selected=[];add(cell)});
+    cell.addEventListener('mousedown',e=>{if(Date.now()<ignoreMouseUntil||e.button!==0)return;e.preventDefault();active=true;startDate=cell.dataset.timeDate;selected=[];add(cell)});
     cell.addEventListener('mouseenter',()=>{if(active)add(cell)});
+    cell.addEventListener('contextmenu',e=>e.preventDefault());
+
+    let timer=null,touchActive=false,moved=false,sx=0,sy=0;
+    cell.addEventListener('touchstart',e=>{
+      if(e.touches.length!==1)return;
+      ignoreMouseUntil=Date.now()+800;
+      const t=e.touches[0];sx=t.clientX;sy=t.clientY;moved=false;touchActive=false;
+      timer=setTimeout(()=>{touchActive=true;active=true;startDate=cell.dataset.timeDate;selected=[];add(cell);if(navigator.vibrate)navigator.vibrate(8)},220);
+    },{passive:true});
+    cell.addEventListener('touchmove',e=>{
+      if(!e.touches.length)return;
+      const t=e.touches[0],dx=Math.abs(t.clientX-sx),dy=Math.abs(t.clientY-sy);
+      if(!touchActive&&(dx>8||dy>8)){moved=true;clearTimeout(timer);return}
+      if(touchActive){
+        e.preventDefault();
+        const target=document.elementFromPoint(t.clientX,t.clientY)?.closest?.('[data-time-date]');
+        add(target);
+      }
+    },{passive:false});
+    cell.addEventListener('touchend',e=>{
+      clearTimeout(timer);
+      if(touchActive){e.preventDefault();finish()}
+      else if(!moved){e.preventDefault();timeBlockModal(cell.dataset.timeDate,Number(cell.dataset.timeHour))}
+      touchActive=false;moved=false;
+    },{passive:false});
+    cell.addEventListener('touchcancel',()=>{clearTimeout(timer);selected.forEach(c=>c.classList.remove('drag-select'));selected=[];active=false;touchActive=false});
   });
   document.onmouseup=finish;
 }
-
 
 const FIN_CATS=[
   {key:'food',label:'식비',color:'#7d6a63'},
@@ -1609,8 +1743,9 @@ function reviewPage(){
   const workRate=workDue.length?Math.round(workDone/workDue.length*100):0;
   const overdue=visibleOpen().filter(t=>t.due&&t.due<todayStr()).length;
   const hs=habits();
-  const habitTarget=hs.reduce((sum,h)=>sum+(h.repeatDays||[1,1,1,1,1,1,1]).filter(Boolean).length,0);
-  const habitDone=hs.reduce((sum,h)=>sum+dates.filter((d,i)=>(h.repeatDays||[1,1,1,1,1,1,1])[i]&&h.logs?.[d]).length,0);
+  const habitStats=hs.map(h=>habitWeekStats(h,dates));
+  const habitTarget=habitStats.reduce((sum,x)=>sum+x.target,0);
+  const habitDone=habitStats.reduce((sum,x)=>sum+x.done,0);
   const habitRate=habitTarget?Math.round(habitDone/habitTarget*100):0;
   const weekBlocks=timeBlocks().filter(b=>dates.includes(b.date));
   const timeTotal=weekBlocks.length;
@@ -1663,6 +1798,28 @@ async function saveWeeklyReview(){
 function placeholder(n){
   const ko={Life:'개인 할 일과 습관을 관리하는 영역입니다.',Time:'시간 사용을 기록하고 주간 흐름을 보는 영역입니다.',Finance:'소비와 예산을 관리하는 영역입니다.'};
   return `<div class="placeholder"><div class="card"><small>다음 구축 영역</small><h1 style="font-size:42px;margin:10px 0">${n}</h1><p>${ko[n]||'다음 단계에서 연결합니다.'}</p></div></div>`;
+}
+
+function globalSearchView(){
+  const q=search.trim().toLowerCase();
+  const rows=[];
+  const add=(kind,id,title,meta,hay)=>{
+    if(String(hay||'').toLowerCase().includes(q))rows.push({kind,id,title,meta});
+  };
+  workItems().filter(x=>!x.deletedAt).forEach(x=>add('work',x.id,x.title,[x.project,x.requester,x.due].filter(Boolean).join(' · '),[x.title,x.project,x.requester,x.channel,x.category,x.note].join(' ')));
+  lifeTodos().filter(x=>!x.deletedAt).forEach(x=>add('personal',x.id,x.title,[x.area,x.due].filter(Boolean).join(' · '),[x.title,x.area,x.note].join(' ')));
+  habits().filter(x=>!x.deletedAt).forEach(x=>add('habit',x.id,x.title,['Habit',x.area].filter(Boolean).join(' · '),[x.title,x.area,habitRepeatText(x)].join(' ')));
+  goals().filter(x=>!x.deletedAt).forEach(x=>add('goal',x.id,x.title,['Goal',x.area].filter(Boolean).join(' · '),[x.title,x.area,x.note].join(' ')));
+  timeBlocks().forEach(x=>add('time',x.id,x.note||timeCat(x.category).label,`${formatDateKo(x.date,true)} · ${String(x.hour).padStart(2,'0')}:00`,[x.note,x.category,x.date,linkedRecordLabel(x.linkedRecordId)].join(' ')));
+  financeEntries().forEach(x=>add('finance',x.id,x.memo||finCat(x.category).label,`${formatDateKo(x.date,true)} · ${x.type==='expense'?'-':'+'}${money(x.amount)}`,[x.memo,x.category,x.method,x.type,x.date].join(' ')));
+  const labels={work:'Work',personal:'Life Todo',habit:'Habit',goal:'Goal',time:'Time',finance:'Finance'};
+  return `<section class="page-search">
+    <div class="hero"><div><h1>검색</h1><p>“${esc(search)}”에 대한 전체 Life Tracker 검색 결과입니다.</p></div></div>
+    <div class="search-summary"><b>${rows.length}</b><span>개의 결과</span></div>
+    <div class="card search-results">
+      ${rows.slice(0,80).map(r=>`<button class="search-result" data-search-kind="${r.kind}" data-search-id="${r.id}"><span class="search-type">${labels[r.kind]}</span><span class="search-main"><b>${esc(r.title||'-')}</b><small>${esc(r.meta||'')}</small></span><span class="search-arrow">›</span></button>`).join('')||'<div class="empty">검색 결과가 없습니다.</div>'}
+    </div>
+  </section>`;
 }
 
 function quickAddModal(){
@@ -1753,9 +1910,9 @@ function taskModal(task=null,quick=false){
 }
 
 function bind(){
-  document.querySelector('#brandHome')?.addEventListener('click',()=>{page='home';render()});
+  document.querySelector('#brandHome')?.addEventListener('click',()=>{search='';page='home';render()});
   document.querySelector('#sideToggle')?.addEventListener('click',()=>{sideCollapsed=!sideCollapsed;localStorage.setItem('lt_sidebar',sideCollapsed?'collapsed':'open');render()});
-  document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;render()});
+  document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{search='';page=b.dataset.page;render()});
   document.querySelector('#logout')?.addEventListener('click',()=>signOut(auth));
   document.querySelector('#quickAdd')?.addEventListener('click',quickAddModal);
   document.querySelector('#openWeeklyReview')?.addEventListener('click',()=>{page='review';render()});
@@ -1764,7 +1921,10 @@ function bind(){
   document.querySelector('#editWeekGoalReview')?.addEventListener('click',weekGoalModal);
   document.querySelector('#saveWeeklyReview')?.addEventListener('click',saveWeeklyReview);
   document.querySelector('#addTask')?.addEventListener('click',()=>taskModal());
-  document.querySelector('#search')?.addEventListener('input',e=>{search=e.target.value;if(page==='work')render()});
+  document.querySelector('#search')?.addEventListener('input',e=>{
+    search=e.target.value;render();
+    requestAnimationFrame(()=>{const el=document.querySelector('#search');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}});
+  });
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
   document.querySelectorAll('[data-done]').forEach(b=>b.onclick=async()=>{const t=tasks.find(x=>x.id===b.dataset.done);if(t){const next=t.status==='done'?'todo':'done';await save({...t,status:next,completedAt:next==='done'?new Date().toISOString():null})}});
   document.querySelectorAll('[data-status]').forEach(s=>s.onchange=async()=>{const t=tasks.find(x=>x.id===s.dataset.status);if(t)await save({...t,status:s.value,completedAt:s.value==='done'?(t.completedAt||new Date().toISOString()):null})});
@@ -1792,13 +1952,23 @@ function bind(){
   document.querySelectorAll('[data-fin-date]').forEach(b=>b.onclick=()=>{financeSelectedDate=b.dataset.finDate;const m=financeSelectedDate.slice(0,7);if(m!==financeMonth)financeMonth=m;render()});
   document.querySelector('#clearFinanceDate')?.addEventListener('click',()=>{financeSelectedDate=null;render()});
   document.querySelector('#clearWeekTime')?.addEventListener('click',async()=>{if(!confirm('이번 주 시간 기록을 전부 비울까요?'))return;const dates=weekDates();const list=timeBlocks().filter(b=>dates.includes(b.date));for(const x of list)await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));render()});
+  document.querySelectorAll('[data-search-kind]').forEach(b=>b.onclick=()=>{
+    const kind=b.dataset.searchKind,id=b.dataset.searchId,x=tasks.find(v=>v.id===id);
+    if(!x)return;
+    if(kind==='work')taskModal(x);
+    else if(kind==='personal')personalModal(x);
+    else if(kind==='habit')habitModal(x);
+    else if(kind==='goal')goalModal(x);
+    else if(kind==='finance')financeModal(x);
+    else if(kind==='time')timeBlockModal(x.date,Number(x.hour));
+  });
 }
 function render(){
   if(!user){
     root.innerHTML=`<div class="auth"><div class="logo">Life Tracker</div><div class="login"><small>PERSONAL OPERATING SYSTEM</small><h1>일과 삶을<br>한 곳에서.</h1><p>업무, 개인 할 일, 시간, 소비를 하나의 대시보드에서 기록하고 관리합니다.</p><button class="btn" id="login">Google로 계속하기</button></div></div>`;
     document.querySelector('#login').onclick=login;return;
   }
-  const c=page==='home'?home():page==='work'?work():page==='life'?life():page==='time'?timePage():page==='finance'?financePage():page==='review'?reviewPage():placeholder(page[0].toUpperCase()+page.slice(1));
+  const c=search.trim()?globalSearchView():page==='home'?home():page==='work'?work():page==='life'?life():page==='time'?timePage():page==='finance'?financePage():page==='review'?reviewPage():placeholder(page[0].toUpperCase()+page.slice(1));
   root.innerHTML=`<div class="app ${sideCollapsed?'side-collapsed':''}">${side()}<main class="main">${top()}${c}</main></div>`;bind();
 }
 render();
