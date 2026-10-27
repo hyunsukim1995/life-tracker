@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Life Tracker</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#101114">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Life Tracker">
+<link rel="icon" href="./life-tracker-icon.svg" type="image/svg+xml">
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 *{box-sizing:border-box}
@@ -555,6 +561,16 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
   .login h1{font-size:36px}
 }
 
+
+/* --- MOBILE HOME TAB + PWA V8 --- */
+.mobile-home-nav{display:none!important}
+@media(max-width:600px){
+  .nav{grid-template-columns:repeat(5,1fr)!important}
+  .mobile-home-nav{display:flex!important}
+  .nav button{font-size:9px!important}
+  .nav .doodle-mark{width:25px!important;height:25px!important}
+}
+
 </style>
 </head>
 <body>
@@ -688,7 +704,7 @@ function openCalendar(current,onSelect){
   const layer=document.createElement('div');layer.className='calendar-layer';layer.id='calendarLayer';document.body.appendChild(layer);
   let y=base.getFullYear(),m=base.getMonth();
   const draw=()=>{
-    const first=new Date(y,m,1),start=(first.getDay()+6)%7,last=new Date(y,m+1,0).getDate();
+    const first=new Date(y,m,1),start=first.getDay(),last=new Date(y,m+1,0).getDate();
     const prevLast=new Date(y,m,0).getDate(),cells=[];
     for(let i=0;i<42;i++){
       let day,cy=y,cm=m,muted=false;
@@ -698,7 +714,7 @@ function openCalendar(current,onSelect){
       const val=cy+'-'+String(cm+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
       cells.push(`<button class="calendar-day ${muted?'muted':''} ${val===current?'selected':''} ${val===todayStr()?'today':''}" data-date="${val}">${day}</button>`);
     }
-    layer.innerHTML=`<div class="calendar-pop"><div class="calendar-head"><button type="button" data-cal-prev>‹</button><div class="calendar-title">${y}년 ${m+1}월</div><button type="button" data-cal-next>›</button></div><div class="calendar-week">${['월','화','수','목','금','토','일'].map(x=>'<div>'+x+'</div>').join('')}</div><div class="calendar-days">${cells.join('')}</div></div>`;
+    layer.innerHTML=`<div class="calendar-pop"><div class="calendar-head"><button type="button" data-cal-prev>‹</button><div class="calendar-title">${y}년 ${m+1}월</div><button type="button" data-cal-next>›</button></div><div class="calendar-week">${['일','월','화','수','목','금','토'].map(x=>'<div>'+x+'</div>').join('')}</div><div class="calendar-days">${cells.join('')}</div></div>`;
     layer.querySelector('[data-cal-prev]').onclick=()=>{m--;if(m<0){m=11;y--}draw()};
     layer.querySelector('[data-cal-next]').onclick=()=>{m++;if(m>11){m=0;y++}draw()};
     layer.querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{onSelect(b.dataset.date);layer.remove()});
@@ -743,6 +759,7 @@ function parseQuick(text){
 function doodleIcon(kind){
   const a='fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"';
   const svg={
+    home:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.8 11.2c2.7-2.2 5.5-4.4 8.2-6.3 2.8 1.7 5.4 3.8 8.1 6.2"/><path ${a} d="M6.2 10.5c-.3 3.2-.2 6.2.3 9 3.5.4 7.4.3 11-.2.3-2.9.3-5.8.1-8.7"/><path ${a} d="M10 19.5v-5.2c1.2-.4 2.6-.4 4 0v5.1"/></svg>`,
     work:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M3.3 9.2c4.6-1.5 12.9-1.1 17.3.4l-.9 9.1c-4.7 1-10.6.7-15.4-.3L3.3 9.2z"/><path ${a} d="M8.7 8.7c.2-2.1 1-3.1 3.5-3.2 2.7-.1 3.4 1.2 3.2 3.5"/><path ${a} d="M4.6 12.5c4.1.8 10.7.2 15-.4"/></svg>`,
     life:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12.1 20.2C9.4 18.6 4.5 15 4.8 9.9 5 6.2 9.5 5 12 8.2c2.1-3.5 7.2-2 7.1 2.1-.2 4.6-4.7 7.7-7 9.9z"/><path ${a} d="M6.3 10.8c1.1-.7 2.2-.7 3.2-.1"/></svg>`,
     time:`<svg class="doodle-icon" viewBox="0 0 24 24"><path ${a} d="M12.4 3.6c5.6.1 8.2 3.8 7.9 8.8-.3 4.8-3.7 8-8.5 8-5.2 0-8.2-3.6-8-8.4.2-5 3.3-8.5 8.6-8.4z"/><path ${a} d="M12 7.5c.2 2.2.2 3.9-.1 5.2l3.7 2.2"/></svg>`,
@@ -758,7 +775,7 @@ function side(){
   return `<aside class="side ${sideCollapsed?'collapsed':''}">
     <div class="side-top"><div class="brand" id="brandHome"><span class="brand-text">Life Tracker</span><span class="brand-mini">${sideCollapsed?'LT':''}</span></div><button class="side-toggle" id="sideToggle" title="메뉴 열기/닫기">${sideCollapsed?'›':'‹'}</button></div>
     <div class="nav">
-      ${[['work','Work'],['life','Life'],['time','Time'],['finance','Finance']].map(x=>`<button data-page="${x[0]}" class="${page===x[0]?'on':''}">${doodleIcon(x[0])}<span class="nav-label">${x[1]}</span></button>`).join('')}
+      <button data-page="home" class="mobile-home-nav ${page==='home'?'on':''}">${doodleIcon('home')}<span class="nav-label">Home</span></button>${[['work','Work'],['life','Life'],['time','Time'],['finance','Finance']].map(x=>`<button data-page="${x[0]}" class="${page===x[0]?'on':''}">${doodleIcon(x[0])}<span class="nav-label">${x[1]}</span></button>`).join('')}
     </div>
     <div class="me"><button id="logout">${doodleIcon('logout')}<span class="logout-label">로그아웃</span></button></div>
   </aside>`;
@@ -1187,7 +1204,16 @@ const FIN_CATS=[
   {key:'saving',label:'저축/투자',color:'#67765c'},
   {key:'other',label:'기타',color:'#64676d'}
 ];
-function finCat(key){return FIN_CATS.find(x=>x.key===key)||FIN_CATS[FIN_CATS.length-1]}
+const FIN_INCOME_CATS=[
+  {key:'salary',label:'월급',color:'#688b77'},
+  {key:'bonus',label:'상여/성과급',color:'#6d8290'},
+  {key:'sideincome',label:'부수입',color:'#7c7562'},
+  {key:'refund',label:'환급/정산',color:'#6f7882'},
+  {key:'otherincome',label:'기타 수입',color:'#666a70'}
+];
+
+function finCat(key){return FIN_CATS.find(x=>x.key===key)||FIN_INCOME_CATS.find(x=>x.key===key)||FIN_CATS[FIN_CATS.length-1]}
+function financeCategoryOptions(type,selected){const list=type==='income'?FIN_INCOME_CATS:FIN_CATS;return list.map(c=>`<option value="${c.key}" ${selected===c.key?'selected':''}>${c.label}</option>`).join('')}
 function monthShift(month,delta){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+delta,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function financePage(){
   setTimeout(()=>ensureRecurringForMonth(financeMonth),0);
@@ -1239,18 +1265,24 @@ function financeModal(item=null){
     <label>구분<select name="type"><option value="expense" ${x.type==='expense'?'selected':''}>지출</option><option value="income" ${x.type==='income'?'selected':''}>수입</option></select></label>
     <label>금액<div class="money-input"><input type="number" min="0" step="100" name="amount" value="${esc(x.amount)}" required><span>원</span></div></label>
     ${calendarField('date',x.date||todayStr(),'날짜')}
-    <label>카테고리<select name="category">${FIN_CATS.map(c=>`<option value="${c.key}" ${x.category===c.key?'selected':''}>${c.label}</option>`).join('')}</select></label>
+    <label>카테고리<select name="category">${financeCategoryOptions(x.type,x.category)}</select></label>
     <label>성격<select name="nature"><option value="variable" ${x.nature==='variable'?'selected':''}>변동</option><option value="fixed" ${x.nature==='fixed'?'selected':''}>고정</option></select></label>
     <label>결제수단<select name="method">${['카드','계좌','현금','기타'].map(v=>`<option ${x.method===v?'selected':''}>${v}</option>`).join('')}</select></label>
     <label class="full">메모<input name="memo" value="${esc(x.memo||'')}" placeholder="예: 점심, 교통카드 충전"></label>
     <label class="full"><span>반복</span><div class="repeat-box"><input type="checkbox" name="recurring" ${x.recurring&&!x.recurringInstance?'checked':''} ${x.recurringInstance?'disabled':''}><span>매월 같은 날짜에 자동 생성${x.recurringInstance?' · 자동 생성된 내역':''}</span></div></label>
   </div><div class="actions"><div>${editing?'<button type="button" class="btn danger" id="deleteFinance">삭제</button>':''}</div><div class="actions-right"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn">저장</button></div></div></form></div>`);
   const form=document.querySelector('#financeForm');bindCalendarFields(form);
+  form.elements.type.addEventListener('change',()=>{
+    const type=form.elements.type.value;
+    const current=form.elements.category.value;
+    const list=type==='income'?FIN_INCOME_CATS:FIN_CATS;
+    form.elements.category.innerHTML=financeCategoryOptions(type,list.some(c=>c.key===current)?current:list[0].key);
+  });
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
   document.querySelector('#deleteFinance')?.addEventListener('click',async()=>{if(confirm('이 내역을 삭제할까요?'))await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));document.querySelector('#modal').remove();render()});
   form.onsubmit=async e=>{
     e.preventDefault();const fd=new FormData(e.target),date=fd.get('date')||todayStr();
-    await save({...x,id:editing?x.id:'fe-'+Date.now(),recordType:'financeentry',type:fd.get('type'),amount:Number(fd.get('amount'))||0,date,category:fd.get('category')||'other',nature:fd.get('nature')||'variable',method:fd.get('method')||'카드',memo:String(fd.get('memo')||'').trim(),recurring:x.recurringInstance?false:!!fd.get('recurring'),recurringDay:Number(String(date).slice(8,10))||1,receivedAt:editing?(x.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});
+    await save({...x,id:editing?x.id:'fe-'+Date.now(),recordType:'financeentry',type:fd.get('type'),amount:Number(fd.get('amount'))||0,date,category:fd.get('category')||(fd.get('type')==='income'?'salary':'other'),nature:fd.get('nature')||'variable',method:fd.get('method')||'카드',memo:String(fd.get('memo')||'').trim(),recurring:x.recurringInstance?false:!!fd.get('recurring'),recurringDay:Number(String(date).slice(8,10))||1,receivedAt:editing?(x.receivedAt||new Date().toISOString()):new Date().toISOString(),deletedAt:null});
     document.querySelector('#modal').remove();render();
   };
 }
@@ -1393,6 +1425,9 @@ function render(){
   root.innerHTML=`<div class="app ${sideCollapsed?'side-collapsed':''}">${side()}<main class="main">${top()}${c}</main></div>`;bind();
 }
 render();
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
