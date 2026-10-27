@@ -982,6 +982,14 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
   }
 }
 
+/* --- TOSS OCR + DATE UPLOAD V16 --- */
+.finance-date-action{width:min(560px,94vw)}
+.finance-date-action>small{font-size:9px;color:#7f858b;letter-spacing:.09em}.finance-date-action h2{margin-top:7px}
+.finance-date-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.daily-upload-date{max-width:240px;margin-top:14px}.daily-upload-date .calendar-field{width:100%}
+.import-memo-wrap{min-width:0}.import-memo-wrap input{width:100%}.import-memo-wrap small{display:block;margin-top:4px;color:#b78585;font-size:9px}
+.import-row.transfer-candidate{background:rgba(132,75,75,.07)}
+@media(max-width:620px){.finance-date-actions{grid-template-columns:1fr}.daily-upload-date{max-width:none}}
 </style>
 </head>
 <body>
@@ -1888,14 +1896,15 @@ function financeFindCorporateMatches(corpRows,newRows){
 function financeImportPreviewModal(rows,corpRows=[],title='업로드 미리보기'){
   const existingFingerprints=new Set(financeAllEntries().map(x=>x.importFingerprint).filter(Boolean));
   const fresh=rows.filter(x=>!existingFingerprints.has(x.importFingerprint)),duplicateCount=rows.length-fresh.length;
+  const transferCount=fresh.filter(x=>x.ocrTransferCandidate).length;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet finance-upload-sheet">
     <h2>${esc(title)}</h2>
-    <div class="upload-summary"><span>신규 <b>${fresh.length}</b>건</span><span>중복 제외 <b>${duplicateCount}</b>건</span><span>법카 파일 <b>${corpRows.length}</b>건</span></div>
-    <div class="helper">자동 분류 결과를 확인한 뒤 저장하세요. 체크를 끄면 해당 행은 저장하지 않습니다.</div>
+    <div class="upload-summary"><span>신규 <b>${fresh.length}</b>건</span><span>중복 제외 <b>${duplicateCount}</b>건</span><span>법카 파일 <b>${corpRows.length}</b>건</span>${transferCount?`<span>이체 추정 <b>${transferCount}</b>건</span>`:''}</div>
+    <div class="helper">자동 분류 결과를 확인한 뒤 저장하세요. 송금·충전처럼 소비가 아닌 것으로 보이는 항목은 기본 체크를 꺼뒀습니다.</div>
     <div class="import-table"><div class="import-row import-head"><span></span><span>일자</span><span>가맹점</span><span>금액</span><span>카테고리</span><span>카드</span></div>
-      ${fresh.slice(0,250).map((r,i)=>`<div class="import-row" data-import-row="${i}"><input type="checkbox" data-import-use checked><input type="date" data-import-date value="${esc(r.date)}"><input data-import-memo value="${esc(r.memo)}"><input type="number" min="0" step="1" data-import-amount value="${Number(r.amount)||0}"><select data-import-cat>${financeCategoryOptions(r.type,r.category)}</select><input data-import-card value="${esc(r.sourceCard||'카드')}"></div>`).join('')||'<div class="empty">새로 저장할 내역이 없습니다.</div>'}
+      ${fresh.slice(0,250).map((r,i)=>`<div class="import-row ${r.ocrTransferCandidate?'transfer-candidate':''}" data-import-row="${i}"><input type="checkbox" data-import-use ${r.autoUse===false?'':'checked'}><input type="date" data-import-date value="${esc(r.date)}"><div class="import-memo-wrap"><input data-import-memo value="${esc(r.memo)}">${r.ocrTransferCandidate?'<small>이체/충전 추정 · 제외 권장</small>':''}</div><input type="number" min="0" step="1" data-import-amount value="${Number(r.amount)||0}"><select data-import-cat>${financeCategoryOptions(r.type,r.category)}</select><input data-import-card value="${esc(r.sourceCard||'카드')}"></div>`).join('')||'<div class="empty">새로 저장할 내역이 없습니다.</div>'}
     </div>
-    ${fresh.length>250?'<div class="helper">미리보기는 앞 250건만 표시합니다. 파일을 월별로 나눠 업로드하세요.</div>':''}
+    ${fresh.length>250?'<div class="helper">미리보기는 앞 250건만 표시합니다.</div>':''}
     <div class="actions"><button class="btn secondary" id="cancel">취소</button><div class="actions-right"><button class="btn" id="commitFinanceImport" ${fresh.length?'':'disabled'}>저장</button></div></div>
   </div></div>`);
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
@@ -1924,7 +1933,7 @@ function financeUploadModal(){
     <div class="actions"><div></div><button class="btn secondary" id="cancel">닫기</button></div></div></div>`);
   document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
   document.querySelector('#openMonthlyUpload').onclick=()=>{document.querySelector('#modal').remove();financeMonthlyUploadModal()};
-  document.querySelector('#openDailyUpload').onclick=()=>{document.querySelector('#modal').remove();financeDailyUploadModal()};
+  document.querySelector('#openDailyUpload').onclick=()=>{document.querySelector('#modal').remove();financeDailyUploadModal(financeSelectedDate||todayStr())};
   document.querySelector('#manageExcluded').onclick=()=>{document.querySelector('#modal').remove();financeExcludedManager()};
 }
 function financeMonthlyUploadModal(){
@@ -1949,40 +1958,112 @@ function financeMonthlyUploadModal(){
     }catch(err){status.textContent='분석 실패: '+err.message;btn.disabled=false;btn.textContent='분석'}
   };
 }
-function financeParseOcrText(text,sourceName='캡처'){
-  const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);let currentDate=todayStr(),out=[];
-  const skip=/잔액|한도|누적|결제예정|이용대금|총\s*이용|이번달|합계|포인트|혜택/;
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i],date=financeNormalizeDate(line);if(date)currentDate=date;if(skip.test(line))continue;
-    const amounts=[...line.matchAll(/(?:^|\s)(-?\d[\d,]{2,})\s*원?(?:\s|$)/g)].map(m=>financeParseAmount(m[1])).filter(n=>Math.abs(n)>=100);if(!amounts.length)continue;
-    const amount=Math.abs(amounts[amounts.length-1]);if(!amount)continue;
-    const refund=/취소|환불|환급/.test(line);
-    let merchant=line.replace(/(?:20\d{2}[.\-/년]\s*)?\d{1,2}[.\-/월]\s*\d{1,2}일?/g,'').replace(/-?\d[\d,]{2,}\s*원?/g,'').replace(/\b\d{1,2}:\d{2}\b/g,'').replace(/승인|일시불|체크|신용|카드/g,' ').replace(/\s+/g,' ').trim();
-    if(merchant.length<2){const prev=lines[i-1]||'';if(prev&&!skip.test(prev)&&!/\d[\d,]{2,}\s*원/.test(prev))merchant=prev}
-    merchant=merchant||sourceName.replace(/\.[^.]+$/,'');const type=refund?'income':'expense',category=refund?'refund':financeClassifyMemo(merchant);
-    out.push({recordType:'financeentry',type,amount,date:currentDate,category,nature:type==='expense'?financeNatureFromMemo(merchant,category):'variable',method:'카드',memo:merchant,sourceCard:'Daily OCR',sourceKind:'daily_ocr',importFingerprint:['ocr',currentDate,amount,financeNormalizeMerchant(merchant),sourceName,i].join('|'),receivedAt:new Date().toISOString(),deletedAt:null,excludedFromPersonal:false});
-  }
-  const seen=new Set();return out.filter(x=>{const k=[x.date,x.amount,financeNormalizeMerchant(x.memo)].join('|');if(seen.has(k))return false;seen.add(k);return true});
+function financeLoadTesseract(){
+  if(window.Tesseract?.createWorker)return Promise.resolve(window.Tesseract);
+  if(window.__tesseractLoading)return window.__tesseractLoading;
+  window.__tesseractLoading=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.async=true;
+    script.onload=()=>window.Tesseract?.createWorker?resolve(window.Tesseract):reject(new Error('Tesseract 로드 후 createWorker를 찾지 못했습니다.'));
+    script.onerror=()=>reject(new Error('OCR 라이브러리를 불러오지 못했습니다.'));
+    document.head.appendChild(script);
+  });
+  return window.__tesseractLoading;
 }
-function financeDailyUploadModal(){
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet finance-upload-sheet" id="dailyUploadForm"><h2>Daily 캡처 업로드</h2>
-    <div class="helper">카드 앱/문자 결제내역 캡처를 올리면 브라우저에서 OCR 후 날짜·가맹점·금액을 추출하고 카테고리를 자동 분류합니다.</div>
-    <label class="drop-file">이미지 선택<input type="file" name="images" accept="image/*" multiple></label>
-    <div id="ocrStatus" class="helper">첫 분석 시 한국어 OCR 모델을 불러오므로 조금 느릴 수 있습니다.</div>
-    <div class="actions"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn" id="analyzeDaily">OCR 분석</button></div></form></div>`);
-  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
-  document.querySelector('#dailyUploadForm').onsubmit=async e=>{
-    e.preventDefault();const form=e.currentTarget,files=[...form.elements.images.files],status=form.querySelector('#ocrStatus'),btn=form.querySelector('#analyzeDaily');if(!files.length){toast('캡처 이미지를 선택하세요.');return}
-    btn.disabled=true;btn.textContent='OCR 중...';
-    try{
-      const {createWorker}=await import('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js');status.textContent='한국어/영어 OCR 모델을 준비하고 있습니다.';
-      const worker=await createWorker('kor+eng');let rows=[];
-      for(let i=0;i<files.length;i++){
-        status.textContent=`OCR 분석 ${i+1}/${files.length} · ${files[i].name}`;const url=URL.createObjectURL(files[i]);
-        try{const ret=await worker.recognize(url);rows.push(...financeParseOcrText(ret.data.text,files[i].name))}finally{URL.revokeObjectURL(url)}
+function financePreprocessImage(file){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file),img=new Image();
+    img.onload=()=>{
+      try{
+        const maxW=1500,scale=Math.min(1.5,maxW/img.naturalWidth);
+        const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
+        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});
+        ctx.drawImage(img,0,0,w,h);
+        const data=ctx.getImageData(0,0,w,h),p=data.data;
+        let lumSum=0,samples=0;
+        const step=Math.max(4,Math.floor((w*h)/45000));
+        for(let i=0;i<p.length;i+=4*step){lumSum+=(p[i]*.299+p[i+1]*.587+p[i+2]*.114);samples++}
+        const dark=(lumSum/Math.max(1,samples))<115;
+        for(let i=0;i<p.length;i+=4){
+          let g=p[i]*.299+p[i+1]*.587+p[i+2]*.114;
+          if(dark)g=255-g;
+          g=Math.max(0,Math.min(255,(g-128)*1.7+128));
+          p[i]=p[i+1]=p[i+2]=g;p[i+3]=255;
+        }
+        ctx.putImageData(data,0,0);URL.revokeObjectURL(url);resolve(canvas);
+      }catch(e){URL.revokeObjectURL(url);reject(e)}
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('이미지를 읽지 못했습니다.'))};img.src=url;
+  });
+}
+function financeIsTransferMemo(memo=''){
+  const x=String(memo).replace(/\s+/g,' ');
+  return /송금|충전|이체|내\s*[^|]+→|→\s*(송금|.*머니|.*통장)|카카오페이\s*충전|토스뱅크\s*→/.test(x);
+}
+function financeSplitTossDetail(detail=''){
+  const parts=String(detail).split('|').map(x=>x.trim()).filter(Boolean);
+  return {merchant:parts[0]||String(detail).trim(),sourceCard:parts.slice(1).join(' | ')||'Toss'};
+}
+function financeParseOcrText(text,sourceName='캡처',fallbackDate=todayStr()){
+  const raw=String(text||'').replace(/[−–—]/g,'-');
+  const lines=raw.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  let currentDate=fallbackDate||todayStr(),out=[];
+  const skip=/잔액|한도|누적|결제예정|이용대금|총\s*이용|이번달|합계|포인트|혜택|전체\s*내역|거래\s*내역/;
+  const amountRe=/-?\s*\d[\d,\s]{2,}\s*원?/;
+  const cleanAmountLine=line=>line.replace(/^\s*[-+]\s*/,'').replace(/\s+/g,'');
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i],foundDate=financeNormalizeDate(line);
+    if(foundDate){currentDate=foundDate;continue}
+    if(skip.test(line))continue;
+    const m=line.match(amountRe);if(!m)continue;
+    const amount=Math.abs(financeParseAmount(cleanAmountLine(m[0])));if(!amount||amount<100)continue;
+    const positive=/^\s*\+/.test(line);
+    let detail=line.replace(m[0],'').replace(/\s+/g,' ').trim();
+    if(detail.length<2){
+      const next=[];
+      for(let j=i+1;j<Math.min(lines.length,i+4);j++){
+        const candidate=lines[j];
+        if(amountRe.test(candidate)||financeNormalizeDate(candidate)||skip.test(candidate))break;
+        next.push(candidate);
+        if(candidate.includes('|')||candidate.includes('→')||next.join(' ').length>45)break;
       }
-      await worker.terminate();document.querySelector('#modal').remove();financeImportPreviewModal(rows,[],'Daily OCR 미리보기');
-    }catch(err){status.textContent='OCR 실패: '+err.message;btn.disabled=false;btn.textContent='OCR 분석'}
+      detail=next.join(' ').trim();
+    }
+    if(!detail){
+      const prev=lines[i-1]||'';
+      if(prev&&!amountRe.test(prev)&&!skip.test(prev)&&!financeNormalizeDate(prev))detail=prev;
+    }
+    detail=detail||sourceName.replace(/\.[^.]+$/,'');
+    const split=financeSplitTossDetail(detail),merchant=split.merchant.replace(/^[·•\-]\s*/,'').trim(),sourceCard=split.sourceCard;
+    const refund=/취소|환불|환급/.test(detail),income=positive||refund||/입금|받음|캐시백|이자/.test(detail),type=income?'income':'expense',transfer=financeIsTransferMemo(detail);
+    const category=type==='income'?(refund?'refund':'other'):financeClassifyMemo(merchant);
+    out.push({recordType:'financeentry',type,amount,date:currentDate,category,nature:type==='expense'?financeNatureFromMemo(merchant,category):'variable',method:'카드',memo:merchant,sourceCard,sourceKind:'toss_ocr',importFingerprint:['tossocr',currentDate,amount,financeNormalizeMerchant(merchant),sourceName,i].join('|'),receivedAt:new Date().toISOString(),deletedAt:null,excludedFromPersonal:false,autoUse:!transfer,ocrDetail:detail,ocrTransferCandidate:transfer});
+  }
+  const seen=new Set();return out.filter(x=>{const k=[x.date,x.amount,financeNormalizeMerchant(x.memo),x.sourceCard].join('|');if(seen.has(k))return false;seen.add(k);return true});
+}
+function financeDailyUploadModal(dateOverride=null){
+  const baseDate=dateOverride||financeSelectedDate||todayStr();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet finance-upload-sheet" id="dailyUploadForm"><h2>Toss / 카드 캡처 업로드</h2>
+    <div class="helper">Toss 거래내역처럼 금액과 설명이 줄바꿈된 화면도 지원합니다. 캡처에 날짜가 없으면 아래 기본 날짜를 적용합니다.</div>
+    <div class="daily-upload-date">${calendarField('ocrDate',baseDate,'기본 날짜')}</div>
+    <label class="drop-file">이미지 선택<input type="file" name="images" accept="image/*" multiple></label>
+    <div id="ocrStatus" class="helper">이미지를 흑백·명암 보정한 뒤 한국어/영어 OCR을 실행합니다.</div>
+    <div class="actions"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn" id="analyzeDaily">OCR 분석</button></div></form></div>`);
+  const form=document.querySelector('#dailyUploadForm');bindCalendarFields(form);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  form.onsubmit=async e=>{
+    e.preventDefault();const files=[...form.elements.images.files],status=form.querySelector('#ocrStatus'),btn=form.querySelector('#analyzeDaily'),fallback=form.elements.ocrDate.value||baseDate;
+    if(!files.length){toast('캡처 이미지를 선택하세요.');return}
+    btn.disabled=true;btn.textContent='OCR 중...';let worker=null;
+    try{
+      const Tesseract=await financeLoadTesseract();status.textContent='한국어/영어 OCR 모델을 준비하고 있습니다.';
+      worker=await Tesseract.createWorker('kor+eng');if(worker.setParameters)await worker.setParameters({preserve_interword_spaces:'1'});
+      let rows=[];
+      for(let i=0;i<files.length;i++){status.textContent=`이미지 보정 + OCR ${i+1}/${files.length} · ${files[i].name}`;const processed=await financePreprocessImage(files[i]);const ret=await worker.recognize(processed);rows.push(...financeParseOcrText(ret.data.text,files[i].name,fallback))}
+      await worker.terminate();worker=null;document.querySelector('#modal').remove();financeImportPreviewModal(rows,[],'Toss / Daily OCR 미리보기');
+    }catch(err){if(worker)try{await worker.terminate()}catch(e){}status.textContent='OCR 실패: '+err.message;btn.disabled=false;btn.textContent='OCR 분석'}
   };
 }
 function financeExcludedManager(){
@@ -2018,7 +2099,7 @@ function financePage(){
     <div class="finance-month-nav"><button id="prevFinanceMonth">‹</button><div class="finance-month-label">${financeMonth.replace('-','.')}.</div><button id="nextFinanceMonth">›</button></div>
     <div class="finance-import-info"><span>개인카드 합산 기준</span><span>법카 제외 <b>${excludedMonth.length}건 · ${money(excludedAmount)}</b></span><button class="linkbtn" id="manageExcludedInline">제외 내역 보기</button></div>
     <div class="finance-periods"><div class="finance-period"><small>오늘 지출</small><b>${money(todayExpense)}</b></div><div class="finance-period"><small>이번 주 지출</small><b>${money(weekExpense)}</b></div><div class="finance-period"><small>이번 달 지출</small><b>${money(expense)}</b></div><div class="finance-period"><small>이번 달 수입</small><b>${money(income)}</b></div></div>
-    <div class="finance-calendar"><div class="finance-calendar-head"><h3>${financeMonth.replace('-','.')} 월간</h3><div class="helper">날짜를 누르면 해당 날짜로 새 내역을 바로 등록합니다.</div></div><div class="finance-calendar-grid">
+    <div class="finance-calendar"><div class="finance-calendar-head"><h3>${financeMonth.replace('-','.')} 월간</h3><div class="helper">날짜를 누르면 직접 입력하거나 Toss/카드 캡처를 업로드할 수 있습니다.</div></div><div class="finance-calendar-grid">
       ${['일','월','화','수','목','금','토'].map(x=>`<div class="finance-cal-week">${x}</div>`).join('')}
       ${cal.map(c=>`<button class="finance-cal-day ${c.outside?'out':''} ${c.date===todayStr()?'today':''} ${financeSelectedDate===c.date?'selected':''}" data-fin-date="${c.date}"><div class="finance-cal-num">${c.day}</div>${c.income?`<div class="finance-cal-money income">+${money(c.income).replace('원','')}</div>`:''}${c.expense?`<div class="finance-cal-money expense">-${money(c.expense).replace('원','')}</div>`:''}<div class="finance-cal-add">＋</div></button>`).join('')}
     </div></div>
@@ -2030,6 +2111,12 @@ function financePage(){
       <div class="finance-list">${entries.slice(0,40).map(x=>`<div class="finance-entry" data-finance-edit="${x.id}"><div class="date">${formatDateKo(x.date)}</div><div><b>${esc(x.memo||finCat(x.category).label)}${x.recurring||x.recurringInstance?'<span class="recurring-badge">매월</span>':''}${x.sourceKind==='monthly_import'?'<span class="import-badge">업로드</span>':''}${x.sourceKind==='daily_ocr'?'<span class="import-badge">OCR</span>':''}</b><small>${esc(finCat(x.category).label)} · ${esc(x.nature==='fixed'?'고정':'변동')} · ${esc(x.sourceCard||x.method||'')}</small></div><div class="amount ${x.type}">${x.type==='expense'?'-':'+'}${money(x.amount)}</div></div>`).join('')||'<div class="empty">해당 기간 기록이 없습니다.</div>'}</div>
     </div><div class="card"><div class="section-head">${doodleIcon('scribble')}<h3>지출 카테고리</h3></div><div class="finance-categories">${FIN_CATS.map(c=>{const n=totals[c.key]||0,p=expense?Math.round(n/expense*100):0;return `<div class="finance-cat-row"><span>${c.label}</span><div class="finance-cat-track"><i style="width:${p}%;background:${c.color}"></i></div><b>${p}%</b></div>`}).join('')}</div></div></div>
   </section>`;
+}
+function financeDateActionModal(date){
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet finance-date-action"><small>FINANCE · ${formatDateKo(date,true)}</small><h2>내역 추가</h2><div class="finance-date-actions"><button class="upload-mode" id="dateDirect"><b>직접 입력</b><span>금액과 카테고리를 직접 기록</span></button><button class="upload-mode" id="dateCapture"><b>캡처 업로드</b><span>Toss / 카드 거래내역 이미지 OCR</span></button></div><div class="actions"><div></div><button class="btn secondary" id="cancel">취소</button></div></div></div>`);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  document.querySelector('#dateDirect').onclick=()=>{document.querySelector('#modal').remove();financeModal(null,date)};
+  document.querySelector('#dateCapture').onclick=()=>{document.querySelector('#modal').remove();financeDailyUploadModal(date)};
 }
 function financeModal(item=null,dateOverride=null){
   const editing=!!item,x=item||{recordType:'financeentry',type:'expense',amount:'',date:dateOverride||financeSelectedDate||todayStr(),category:'food',nature:'variable',method:'카드',memo:'',recurring:false,recurringDay:Number((dateOverride||financeSelectedDate||todayStr()).slice(8,10))};
@@ -2274,7 +2361,7 @@ function bind(){
   document.querySelector('#prevFinanceMonth')?.addEventListener('click',()=>{financeMonth=monthShift(financeMonth,-1);financeSelectedDate=null;render()});
   document.querySelector('#nextFinanceMonth')?.addEventListener('click',()=>{financeMonth=monthShift(financeMonth,1);financeSelectedDate=null;render()});
   document.querySelectorAll('[data-finance-edit]').forEach(b=>b.onclick=()=>{const x=financeEntries().find(v=>v.id===b.dataset.financeEdit);if(x)financeModal(x)});
-  document.querySelectorAll('[data-fin-date]').forEach(b=>b.onclick=()=>{financeSelectedDate=b.dataset.finDate;const m=financeSelectedDate.slice(0,7);if(m!==financeMonth)financeMonth=m;financeModal(null,financeSelectedDate)});
+  document.querySelectorAll('[data-fin-date]').forEach(b=>b.onclick=()=>{financeSelectedDate=b.dataset.finDate;const m=financeSelectedDate.slice(0,7);if(m!==financeMonth)financeMonth=m;financeDateActionModal(financeSelectedDate)});
   document.querySelector('#clearFinanceDate')?.addEventListener('click',()=>{financeSelectedDate=null;render()});
   document.querySelector('#clearWeekTime')?.addEventListener('click',async()=>{if(!confirm('이번 주 시간 기록을 전부 비울까요?'))return;const dates=weekDates();const list=timeBlocks().filter(b=>dates.includes(b.date));for(const x of list)await deleteDoc(doc(db,'users',user.uid,'tasks',x.id));render()});
   document.querySelectorAll('[data-search-kind]').forEach(b=>b.onclick=()=>{
