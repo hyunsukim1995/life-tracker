@@ -1971,33 +1971,7 @@ function financeLoadTesseract(){
   });
   return window.__tesseractLoading;
 }
-function financePreprocessImage(file){
-  return new Promise((resolve,reject)=>{
-    const url=URL.createObjectURL(file),img=new Image();
-    img.onload=()=>{
-      try{
-        const maxW=1500,scale=Math.min(1.5,maxW/img.naturalWidth);
-        const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
-        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-        const ctx=canvas.getContext('2d',{willReadFrequently:true});
-        ctx.drawImage(img,0,0,w,h);
-        const data=ctx.getImageData(0,0,w,h),p=data.data;
-        let lumSum=0,samples=0;
-        const step=Math.max(4,Math.floor((w*h)/45000));
-        for(let i=0;i<p.length;i+=4*step){lumSum+=(p[i]*.299+p[i+1]*.587+p[i+2]*.114);samples++}
-        const dark=(lumSum/Math.max(1,samples))<115;
-        for(let i=0;i<p.length;i+=4){
-          let g=p[i]*.299+p[i+1]*.587+p[i+2]*.114;
-          if(dark)g=255-g;
-          g=Math.max(0,Math.min(255,(g-128)*1.7+128));
-          p[i]=p[i+1]=p[i+2]=g;p[i+3]=255;
-        }
-        ctx.putImageData(data,0,0);URL.revokeObjectURL(url);resolve(canvas);
-      }catch(e){URL.revokeObjectURL(url);reject(e)}
-    };
-    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('이미지를 읽지 못했습니다.'))};img.src=url;
-  });
-}
+function financePreprocessImage(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{try{const cropX=Math.round(img.naturalWidth*0.14),cropW=Math.max(1,img.naturalWidth-cropX),scale=Math.min(2.2,1900/cropW),w=Math.max(1,Math.round(cropW*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(img,cropX,0,cropW,img.naturalHeight,0,0,w,h);const data=ctx.getImageData(0,0,w,h),p=data.data;let lumSum=0,samples=0;const step=Math.max(4,Math.floor((w*h)/50000));for(let i=0;i<p.length;i+=4*step){lumSum+=(p[i]*.299+p[i+1]*.587+p[i+2]*.114);samples++}const dark=(lumSum/Math.max(1,samples))<125;for(let i=0;i<p.length;i+=4){let g=p[i]*.299+p[i+1]*.587+p[i+2]*.114;if(dark)g=255-g;g=(g-128)*2+128;if(g>205)g=255;else if(g<62)g=0;else g=Math.max(0,Math.min(255,g));p[i]=p[i+1]=p[i+2]=g;p[i+3]=255}ctx.putImageData(data,0,0);URL.revokeObjectURL(url);resolve(canvas)}catch(e){URL.revokeObjectURL(url);reject(e)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('이미지를 읽지 못했습니다.'))};img.src=url})}
 function financeIsTransferMemo(memo=''){
   const x=String(memo).replace(/\s+/g,' ');
   return /송금|충전|이체|내\s*[^|]+→|→\s*(송금|.*머니|.*통장)|카카오페이\s*충전|토스뱅크\s*→/.test(x);
@@ -2006,66 +1980,19 @@ function financeSplitTossDetail(detail=''){
   const parts=String(detail).split('|').map(x=>x.trim()).filter(Boolean);
   return {merchant:parts[0]||String(detail).trim(),sourceCard:parts.slice(1).join(' | ')||'Toss'};
 }
+function financeOcrMerchantQuality(memo=''){const raw=String(memo).trim(),clean=raw.replace(/[^\p{L}\p{N}가-힣]/gu,''),hangul=(clean.match(/[가-힣]/g)||[]).length,latinNum=(clean.match(/[A-Za-z0-9]/g)||[]).length,symbolRatio=raw?Math.max(0,(raw.length-clean.length)/raw.length):1;if(hangul>=2&&clean.length>=3)return 3;if(/^(GS25|CU|GCOO|CGV|KTX)$/i.test(clean))return 3;if(latinNum>=4&&symbolRatio<0.35)return 2;if(clean.length>=5&&symbolRatio<0.25)return 2;return 0}
 function financeParseOcrText(text,sourceName='캡처',fallbackDate=todayStr()){
-  const raw=String(text||'').replace(/[−–—]/g,'-');
-  const lines=raw.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-  let currentDate=fallbackDate||todayStr(),out=[];
-  const skip=/잔액|한도|누적|결제예정|이용대금|총\s*이용|이번달|합계|포인트|혜택|전체\s*내역|거래\s*내역/;
-  const amountRe=/-?\s*\d[\d,\s]{2,}\s*원?/;
-  const cleanAmountLine=line=>line.replace(/^\s*[-+]\s*/,'').replace(/\s+/g,'');
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i],foundDate=financeNormalizeDate(line);
-    if(foundDate){currentDate=foundDate;continue}
-    if(skip.test(line))continue;
-    const m=line.match(amountRe);if(!m)continue;
-    const amount=Math.abs(financeParseAmount(cleanAmountLine(m[0])));if(!amount||amount<100)continue;
-    const positive=/^\s*\+/.test(line);
-    let detail=line.replace(m[0],'').replace(/\s+/g,' ').trim();
-    if(detail.length<2){
-      const next=[];
-      for(let j=i+1;j<Math.min(lines.length,i+4);j++){
-        const candidate=lines[j];
-        if(amountRe.test(candidate)||financeNormalizeDate(candidate)||skip.test(candidate))break;
-        next.push(candidate);
-        if(candidate.includes('|')||candidate.includes('→')||next.join(' ').length>45)break;
-      }
-      detail=next.join(' ').trim();
-    }
-    if(!detail){
-      const prev=lines[i-1]||'';
-      if(prev&&!amountRe.test(prev)&&!skip.test(prev)&&!financeNormalizeDate(prev))detail=prev;
-    }
-    detail=detail||sourceName.replace(/\.[^.]+$/,'');
-    const split=financeSplitTossDetail(detail),merchant=split.merchant.replace(/^[·•\-]\s*/,'').trim(),sourceCard=split.sourceCard;
-    const refund=/취소|환불|환급/.test(detail),income=positive||refund||/입금|받음|캐시백|이자/.test(detail),type=income?'income':'expense',transfer=financeIsTransferMemo(detail);
-    const category=type==='income'?(refund?'refund':'other'):financeClassifyMemo(merchant);
-    out.push({recordType:'financeentry',type,amount,date:currentDate,category,nature:type==='expense'?financeNatureFromMemo(merchant,category):'variable',method:'카드',memo:merchant,sourceCard,sourceKind:'toss_ocr',importFingerprint:['tossocr',currentDate,amount,financeNormalizeMerchant(merchant),sourceName,i].join('|'),receivedAt:new Date().toISOString(),deletedAt:null,excludedFromPersonal:false,autoUse:!transfer,ocrDetail:detail,ocrTransferCandidate:transfer});
-  }
-  const seen=new Set();return out.filter(x=>{const k=[x.date,x.amount,financeNormalizeMerchant(x.memo),x.sourceCard].join('|');if(seen.has(k))return false;seen.add(k);return true});
+  const raw=String(text||'').replace(/[−–—]/g,'-'),lines=raw.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);let currentDate=fallbackDate||todayStr(),out=[];
+  const skip=/잔액|한도|누적|결제예정|이용대금|총\s*이용|이번달|합계|포인트|혜택|전체\s*내역|거래\s*내역|자산|홈|소비|송금하기/;
+  const amountOnly=/^[^\p{L}\p{N}가-힣]{0,4}([+-]?)\s*(\d{1,3}(?:[\s,]\d{3})+|\d{3,7})\s*원?\s*$/u,normalizeAmount=x=>String(x).replace(/\s+/g,'').replace(/,/g,'');
+  for(let i=0;i<lines.length;i++){const line=lines[i],foundDate=financeNormalizeDate(line);if(foundDate){currentDate=foundDate;continue}if(skip.test(line))continue;const m=line.match(amountOnly);if(!m)continue;const amount=Math.abs(Number(normalizeAmount(m[2]))||0);if(!amount||amount<100)continue;const positive=m[1]==='+';let detail='';
+    for(let j=i+1;j<Math.min(lines.length,i+4);j++){const candidate=lines[j];if(amountOnly.test(candidate)||financeNormalizeDate(candidate)||skip.test(candidate))break;if(candidate.length<2)continue;detail=(detail?detail+' ':'')+candidate;if(candidate.includes('|')||candidate.includes('→')||detail.length>54)break}
+    if(!detail){const prev=lines[i-1]||'';if(prev&&!amountOnly.test(prev)&&!skip.test(prev)&&!financeNormalizeDate(prev))detail=prev}
+    detail=detail||sourceName.replace(/\.[^.]+$/,'');const split=financeSplitTossDetail(detail),merchant=split.merchant.replace(/^[·•\-|()[\]{}]\s*/,'').replace(/\s+/g,' ').trim(),sourceCard=split.sourceCard,refund=/취소|환불|환급/.test(detail),income=positive||refund||/입금|받음|캐시백|이자/.test(detail),type=income?'income':'expense',transfer=financeIsTransferMemo(detail),needsReview=financeOcrMerchantQuality(merchant)===0,category=type==='income'?(refund?'refund':'other'):financeClassifyMemo(merchant);
+    out.push({recordType:'financeentry',type,amount,date:currentDate,category,nature:type==='expense'?financeNatureFromMemo(merchant,category):'variable',method:'카드',memo:merchant||'인식 필요',sourceCard,sourceKind:'toss_ocr',importFingerprint:['tossocr',currentDate,amount,financeNormalizeMerchant(merchant),sourceName,i].join('|'),receivedAt:new Date().toISOString(),deletedAt:null,excludedFromPersonal:false,autoUse:!transfer&&!needsReview,ocrDetail:detail,ocrTransferCandidate:transfer,ocrNeedsReview:needsReview})}
+  const seen=new Set();return out.filter(x=>{const k=[x.date,x.amount,financeNormalizeMerchant(x.memo),x.sourceCard].join('|');if(seen.has(k))return false;seen.add(k);return true})
 }
-function financeDailyUploadModal(dateOverride=null){
-  const baseDate=dateOverride||financeSelectedDate||todayStr();
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet finance-upload-sheet" id="dailyUploadForm"><h2>Toss / 카드 캡처 업로드</h2>
-    <div class="helper">Toss 거래내역처럼 금액과 설명이 줄바꿈된 화면도 지원합니다. 캡처에 날짜가 없으면 아래 기본 날짜를 적용합니다.</div>
-    <div class="daily-upload-date">${calendarField('ocrDate',baseDate,'기본 날짜')}</div>
-    <label class="drop-file">이미지 선택<input type="file" name="images" accept="image/*" multiple></label>
-    <div id="ocrStatus" class="helper">이미지를 흑백·명암 보정한 뒤 한국어/영어 OCR을 실행합니다.</div>
-    <div class="actions"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn" id="analyzeDaily">OCR 분석</button></div></form></div>`);
-  const form=document.querySelector('#dailyUploadForm');bindCalendarFields(form);
-  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
-  form.onsubmit=async e=>{
-    e.preventDefault();const files=[...form.elements.images.files],status=form.querySelector('#ocrStatus'),btn=form.querySelector('#analyzeDaily'),fallback=form.elements.ocrDate.value||baseDate;
-    if(!files.length){toast('캡처 이미지를 선택하세요.');return}
-    btn.disabled=true;btn.textContent='OCR 중...';let worker=null;
-    try{
-      const Tesseract=await financeLoadTesseract();status.textContent='한국어/영어 OCR 모델을 준비하고 있습니다.';
-      worker=await Tesseract.createWorker('kor+eng');if(worker.setParameters)await worker.setParameters({preserve_interword_spaces:'1'});
-      let rows=[];
-      for(let i=0;i<files.length;i++){status.textContent=`이미지 보정 + OCR ${i+1}/${files.length} · ${files[i].name}`;const processed=await financePreprocessImage(files[i]);const ret=await worker.recognize(processed);rows.push(...financeParseOcrText(ret.data.text,files[i].name,fallback))}
-      await worker.terminate();worker=null;document.querySelector('#modal').remove();financeImportPreviewModal(rows,[],'Toss / Daily OCR 미리보기');
-    }catch(err){if(worker)try{await worker.terminate()}catch(e){}status.textContent='OCR 실패: '+err.message;btn.disabled=false;btn.textContent='OCR 분석'}
-  };
-}
+function financeDailyUploadModal(dateOverride=null){const baseDate=dateOverride||financeSelectedDate||todayStr();document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet finance-upload-sheet" id="dailyUploadForm"><h2>Toss / 카드 캡처 업로드</h2><div class="helper">Toss 거래내역 캡처에 맞춰 아이콘 영역을 제외하고 금액 + 다음 설명 줄을 한 거래로 읽습니다. 캡처에 날짜가 없으면 아래 기본 날짜를 적용합니다.</div><div class="daily-upload-date">${calendarField('ocrDate',baseDate,'기본 날짜')}</div><label class="drop-file">이미지 선택<input type="file" name="images" accept="image/*" multiple></label><div id="ocrStatus" class="helper">이미지를 확대·흑백·명암 보정한 뒤 OCR을 실행합니다.</div><div class="actions"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn" id="analyzeDaily">OCR 분석</button></div></form></div>`);const form=document.querySelector('#dailyUploadForm');bindCalendarFields(form);document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();form.onsubmit=async e=>{e.preventDefault();const files=[...form.elements.images.files],status=form.querySelector('#ocrStatus'),btn=form.querySelector('#analyzeDaily'),fallback=form.elements.ocrDate.value||baseDate;if(!files.length){toast('캡처 이미지를 선택하세요.');return}btn.disabled=true;btn.textContent='OCR 중...';let worker=null;try{const Tesseract=await financeLoadTesseract();status.textContent='한국어/영어 OCR 모델을 준비하고 있습니다.';worker=await Tesseract.createWorker('kor+eng');if(worker.setParameters)await worker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'});let rows=[];for(let i=0;i<files.length;i++){status.textContent=`Toss 화면 보정 + OCR ${i+1}/${files.length} · ${files[i].name}`;const processed=await financePreprocessImage(files[i]),ret=await worker.recognize(processed);rows.push(...financeParseOcrText(ret.data.text,files[i].name,fallback))}await worker.terminate();worker=null;document.querySelector('#modal').remove();financeImportPreviewModal(rows,[],'Toss / Daily OCR 미리보기')}catch(err){if(worker)try{await worker.terminate()}catch(e){}status.textContent='OCR 실패: '+err.message;btn.disabled=false;btn.textContent='OCR 분석'}}}
 function financeExcludedManager(){
   const excluded=financeAllEntries().filter(x=>x.excludedFromPersonal).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet finance-upload-sheet"><h2>법카 제외 관리</h2><div class="helper">법카 업로드로 개인 지출에서 제외된 내역입니다. 잘못 매칭된 항목은 복구할 수 있습니다.</div>
