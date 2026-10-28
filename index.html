@@ -990,6 +990,9 @@ details,.life-item,.habit-row,.trash-line,.task{border-color:#2b2d32}
 .import-memo-wrap{min-width:0}.import-memo-wrap input{width:100%}.import-memo-wrap small{display:block;margin-top:4px;color:#b78585;font-size:9px}
 .import-row.transfer-candidate{background:rgba(132,75,75,.07)}
 @media(max-width:620px){.finance-date-actions{grid-template-columns:1fr}.daily-upload-date{max-width:none}}
+
+/* --- DAILY OCR DUAL PASS V18 --- */
+.drop-file>span{font-size:16px;font-weight:700}
 </style>
 </head>
 <body>
@@ -1992,7 +1995,55 @@ function financeParseOcrText(text,sourceName='캡처',fallbackDate=todayStr()){
     out.push({recordType:'financeentry',type,amount,date:currentDate,category,nature:type==='expense'?financeNatureFromMemo(merchant,category):'variable',method:'카드',memo:merchant||'인식 필요',sourceCard,sourceKind:'toss_ocr',importFingerprint:['tossocr',currentDate,amount,financeNormalizeMerchant(merchant),sourceName,i].join('|'),receivedAt:new Date().toISOString(),deletedAt:null,excludedFromPersonal:false,autoUse:!transfer&&!needsReview,ocrDetail:detail,ocrTransferCandidate:transfer,ocrNeedsReview:needsReview})}
   const seen=new Set();return out.filter(x=>{const k=[x.date,x.amount,financeNormalizeMerchant(x.memo),x.sourceCard].join('|');if(seen.has(k))return false;seen.add(k);return true})
 }
-function financeDailyUploadModal(dateOverride=null){const baseDate=dateOverride||financeSelectedDate||todayStr();document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet finance-upload-sheet" id="dailyUploadForm"><h2>Toss / 카드 캡처 업로드</h2><div class="helper">Toss 거래내역 캡처에 맞춰 아이콘 영역을 제외하고 금액 + 다음 설명 줄을 한 거래로 읽습니다. 캡처에 날짜가 없으면 아래 기본 날짜를 적용합니다.</div><div class="daily-upload-date">${calendarField('ocrDate',baseDate,'기본 날짜')}</div><label class="drop-file">이미지 선택<input type="file" name="images" accept="image/*" multiple></label><div id="ocrStatus" class="helper">이미지를 확대·흑백·명암 보정한 뒤 OCR을 실행합니다.</div><div class="actions"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn" id="analyzeDaily">OCR 분석</button></div></form></div>`);const form=document.querySelector('#dailyUploadForm');bindCalendarFields(form);document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();form.onsubmit=async e=>{e.preventDefault();const files=[...form.elements.images.files],status=form.querySelector('#ocrStatus'),btn=form.querySelector('#analyzeDaily'),fallback=form.elements.ocrDate.value||baseDate;if(!files.length){toast('캡처 이미지를 선택하세요.');return}btn.disabled=true;btn.textContent='OCR 중...';let worker=null;try{const Tesseract=await financeLoadTesseract();status.textContent='한국어/영어 OCR 모델을 준비하고 있습니다.';worker=await Tesseract.createWorker('kor+eng');if(worker.setParameters)await worker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'});let rows=[];for(let i=0;i<files.length;i++){status.textContent=`Toss 화면 보정 + OCR ${i+1}/${files.length} · ${files[i].name}`;const processed=await financePreprocessImage(files[i]),ret=await worker.recognize(processed);rows.push(...financeParseOcrText(ret.data.text,files[i].name,fallback))}await worker.terminate();worker=null;document.querySelector('#modal').remove();financeImportPreviewModal(rows,[],'Toss / Daily OCR 미리보기')}catch(err){if(worker)try{await worker.terminate()}catch(e){}status.textContent='OCR 실패: '+err.message;btn.disabled=false;btn.textContent='OCR 분석'}}}
+function financeDailyUploadModal(dateOverride=null){
+  const baseDate=dateOverride||financeSelectedDate||todayStr();
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><form class="sheet finance-upload-sheet" id="dailyUploadForm"><h2>Toss / 카드 캡처 업로드</h2>
+    <div class="helper">같은 Toss 캡처를 두 방식으로 읽어 누락된 거래까지 합칩니다. 캡처에 날짜가 없으면 아래 기본 날짜를 적용합니다.</div>
+    <div class="daily-upload-date">${calendarField('ocrDate',baseDate,'기본 날짜')}</div>
+    <label class="drop-file"><span>사진 보관함에서 선택</span><input type="file" name="images" accept="image/*" multiple></label>
+    <div id="ocrStatus" class="helper">여러 장을 한 번에 선택할 수 있습니다.</div>
+    <div class="actions"><button type="button" class="btn secondary" id="cancel">취소</button><button class="btn" id="analyzeDaily">OCR 분석</button></div></form></div>`);
+  const form=document.querySelector('#dailyUploadForm');bindCalendarFields(form);
+  document.querySelector('#cancel').onclick=()=>document.querySelector('#modal').remove();
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    const files=[...form.elements.images.files],status=form.querySelector('#ocrStatus'),btn=form.querySelector('#analyzeDaily'),fallback=form.elements.ocrDate.value||baseDate;
+    if(!files.length){toast('사진을 선택하세요.');return}
+    btn.disabled=true;btn.textContent='OCR 중...';let worker=null;
+    try{
+      const Tesseract=await financeLoadTesseract();
+      worker=await Tesseract.createWorker('kor+eng');
+      let rows=[];
+      for(let i=0;i<files.length;i++){
+        status.textContent=`1차 분석 ${i+1}/${files.length} · ${files[i].name}`;
+        const processed=await financePreprocessImage(files[i]);
+
+        if(worker.setParameters)await worker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:'6',user_defined_dpi:'300'});
+        const first=await worker.recognize(processed);
+        const firstRows=financeParseOcrText(first.data.text,files[i].name,fallback);
+
+        status.textContent=`2차 분석 ${i+1}/${files.length} · 누락 거래 확인 중`;
+        if(worker.setParameters)await worker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:'11',user_defined_dpi:'300'});
+        const second=await worker.recognize(files[i]);
+        const secondRows=financeParseOcrText(second.data.text,files[i].name,fallback);
+
+        const merged=[...firstRows];
+        for(const r of secondRows){
+          const same=merged.find(x=>Number(x.amount)===Number(r.amount)&&x.date===r.date&&financeMerchantScore(x.memo,r.memo)>=2);
+          if(!same)merged.push(r);
+          else if(financeOcrMerchantQuality(r.memo)>financeOcrMerchantQuality(same.memo))Object.assign(same,r);
+        }
+        rows.push(...merged);
+      }
+      await worker.terminate();worker=null;
+      document.querySelector('#modal').remove();
+      financeImportPreviewModal(rows,[],'Toss / Daily OCR 미리보기');
+    }catch(err){
+      if(worker)try{await worker.terminate()}catch(e){}
+      status.textContent='OCR 실패: '+err.message;btn.disabled=false;btn.textContent='OCR 분석';
+    }
+  };
+}
 function financeExcludedManager(){
   const excluded=financeAllEntries().filter(x=>x.excludedFromPersonal).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="modal"><div class="sheet finance-upload-sheet"><h2>법카 제외 관리</h2><div class="helper">법카 업로드로 개인 지출에서 제외된 내역입니다. 잘못 매칭된 항목은 복구할 수 있습니다.</div>
